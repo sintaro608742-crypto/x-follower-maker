@@ -28,21 +28,26 @@ const nextConfig = {
 
   // セキュリティヘッダー
   async headers() {
-    return [
+    // 本番環境では同じドメインを使用するため、CORSヘッダーは不要
+    // 開発環境のみCORSを有効化
+    const isDev = process.env.NODE_ENV === 'development';
+    const origin = process.env.CORS_ORIGIN || 'http://localhost:3247';
+
+    return isDev ? [
       {
         source: '/api/:path*',
         headers: [
           { key: 'Access-Control-Allow-Credentials', value: 'true' },
-          { key: 'Access-Control-Allow-Origin', value: '*' },
-          { key: 'Access-Control-Allow-Methods', value: 'GET,DELETE,PATCH,POST,PUT' },
+          { key: 'Access-Control-Allow-Origin', value: origin },
+          { key: 'Access-Control-Allow-Methods', value: 'GET,DELETE,PATCH,POST,PUT,OPTIONS' },
           {
             key: 'Access-Control-Allow-Headers',
             value:
-              'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version',
+              'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Cookie',
           },
         ],
       },
-    ];
+    ] : [];
   },
 
   // リライトルール: フロントエンド（Vite）のルーティングをサポート
