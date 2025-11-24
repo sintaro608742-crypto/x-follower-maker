@@ -13,8 +13,9 @@ import postgres from 'postgres';
 import * as schema from './schema';
 import { config } from 'dotenv';
 
-// 環境変数を確実にロード（.env.localが存在する場合）
-if (typeof process.env.DATABASE_URL === 'undefined') {
+// 環境変数を確実にロード（ローカル開発環境のみ）
+// Vercel環境では環境変数は既に注入されているため、dotenvは不要
+if (typeof process.env.DATABASE_URL === 'undefined' && process.env.VERCEL !== '1') {
   config({ path: '.env.local' });
 }
 
