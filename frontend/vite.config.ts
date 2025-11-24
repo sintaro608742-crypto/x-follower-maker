@@ -14,6 +14,8 @@ export default defineConfig({
     port: 3247,
   },
   build: {
+    outDir: '../public',
+    emptyOutDir: true,
     chunkSizeWarningLimit: 1500, // Phase 1 MVP: 警告閾値を1500kBに設定（デフォルト500kB）
   },
 })

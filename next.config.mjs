@@ -45,6 +45,27 @@ const nextConfig = {
     ];
   },
 
+  // リライトルール: フロントエンド（Vite）のルーティングをサポート
+  async rewrites() {
+    return {
+      beforeFiles: [],
+      afterFiles: [
+        // APIルートは除外（Next.jsのAPIルートを優先）
+        {
+          source: '/:path*',
+          has: [
+            {
+              type: 'header',
+              key: 'x-skip-rewrite',
+            },
+          ],
+          destination: '/:path*',
+        },
+      ],
+      fallback: [],
+    };
+  },
+
 };
 
 export default nextConfig;

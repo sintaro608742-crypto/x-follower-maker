@@ -31,8 +31,24 @@ export function middleware(request: NextRequest) {
     );
   }
 
-  // 通常時は処理を続行
-  return NextResponse.next();
+  // APIルート以外はフロントエンドにリライト（ViteのSPAルーティングをサポート）
+  const pathname = request.nextUrl.pathname;
+
+  // APIルートはNext.jsで処理
+  if (pathname.startsWith('/api/')) {
+    return NextResponse.next();
+  }
+
+  // 静的ファイル（.js, .css, .png等）はそのまま配信
+  if (
+    pathname.match(/\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2|ttf|eot|json)$/)
+  ) {
+    return NextResponse.next();
+  }
+
+  // それ以外のルート（/, /dashboard, /posts等）はフロントエンドのindex.htmlを返す
+  // これによりViteのReact Routerが動作する
+  return NextResponse.rewrite(new URL('/index.html', request.url));
 }
 
 // Middlewareの適用範囲（全てのAPIルートに適用）
