@@ -135,6 +135,52 @@ tsx scripts/update-demo-user.ts
 
 ---
 
+### `check-cron-execution.mjs`
+
+**用途**: Cronジョブの実行状況確認
+
+**実行方法**:
+```bash
+node scripts/check-cron-execution.mjs
+```
+
+**機能**:
+- 投稿ステータスの確認（scheduled/posted/failed）
+- 最新5件のフォロワー統計表示
+- 次の投稿予定表示
+- Cron動作状況の診断
+
+**出力例**:
+```
+🔍 Cronジョブ実行状況を確認中...
+
+1️⃣ 投稿ステータス:
+   ✅ [POSTED] 2025/11/24 6:16:33
+      【即時投稿テスト】この投稿は即座に投稿される予定です...
+      🐦 Tweet ID: 1234567890
+      🔗 https://twitter.com/i/web/status/1234567890
+
+   📊 ステータスサマリー:
+      - scheduled: 2件
+      - posted: 3件
+      - failed: 0件
+
+2️⃣ フォロワー統計:
+   最新5件:
+   📊 2025/11/24 6:21:33: 146フォロワー / 43フォロー中
+
+3️⃣ 次の実行予定:
+   ⏰ 2025/11/24 16:00:00 （35分後）
+      【次回投稿】...
+```
+
+**使用タイミング**:
+- Cron動作確認時
+- 投稿が実行されているか確認したい時
+- デバッグ時
+
+---
+
 ## 📝 投稿管理
 
 ### `create-scheduled-post.mjs`
