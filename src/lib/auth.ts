@@ -30,11 +30,15 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
+        console.log('[NextAuth] authorize called with email:', credentials?.email);
+
         if (!credentials?.email || !credentials?.password) {
+          console.log('[NextAuth] Missing credentials');
           return null;
         }
 
         try {
+          console.log('[NextAuth] Looking up user in database...');
           // データベースからユーザーを検索
           const [user] = await db
             .select()
@@ -43,20 +47,27 @@ export const authOptions: NextAuthOptions = {
             .limit(1);
 
           if (!user) {
+            console.log('[NextAuth] User not found');
             return null;
           }
 
+          console.log('[NextAuth] User found:', user.id);
+
           // パスワード検証
+          console.log('[NextAuth] Validating password...');
           const isPasswordValid = await bcrypt.compare(
             credentials.password,
             user.password_hash
           );
+
+          console.log('[NextAuth] Password valid:', isPasswordValid);
 
           if (!isPasswordValid) {
             return null;
           }
 
           // ユーザー情報を返す
+          console.log('[NextAuth] Authorization successful');
           return {
             id: user.id,
             email: user.email,
@@ -67,7 +78,7 @@ export const authOptions: NextAuthOptions = {
             post_times: user.post_times,
           };
         } catch (error) {
-          console.error('Auth error:', error);
+          console.error('[NextAuth] Auth error:', error);
           return null;
         }
       },
