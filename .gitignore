@@ -54,3 +54,4 @@ drizzle/
 
 # Local development
 .env.local
+.vercel

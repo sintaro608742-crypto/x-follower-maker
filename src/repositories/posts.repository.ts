@@ -7,7 +7,7 @@
 
 import { db } from '@/db/client';
 import { posts } from '@/db/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, lte } from 'drizzle-orm';
 import { Post, PostStatus } from '@/types';
 import { DatabaseError } from '@/lib/errors';
 
@@ -498,5 +498,185 @@ export async function regeneratePost(postId: string, newContent: string): Promis
     };
   } catch (error) {
     throw new DatabaseError('Failed to regenerate post', error as Error);
+  }
+}
+
+/**
+ * スケジュール済み投稿を取得（Cron用）
+ *
+ * scheduled_at <= 現在時刻 かつ is_approved=true かつ status='scheduled' の投稿を取得
+ *
+ * @param limit - 取得件数上限
+ * @returns 投稿配列（user_idも含む）
+ * @throws {DatabaseError} データベースエラー
+ */
+export async function getScheduledPostsDue(limit = 100): Promise<Post[]> {
+  try {
+    const now = new Date();
+
+    const postsList = await db
+      .select({
+        id: posts.id,
+        user_id: posts.user_id,
+        content: posts.content,
+        scheduled_at: posts.scheduled_at,
+        is_approved: posts.is_approved,
+        is_manual: posts.is_manual,
+        status: posts.status,
+        posted_at: posts.posted_at,
+        error_message: posts.error_message,
+        twitter_tweet_id: posts.twitter_tweet_id,
+        created_at: posts.created_at,
+        updated_at: posts.updated_at,
+      })
+      .from(posts)
+      .where(
+        and(
+          lte(posts.scheduled_at, now),
+          eq(posts.is_approved, true),
+          eq(posts.status, 'scheduled')
+        )
+      )
+      .orderBy(posts.scheduled_at)
+      .limit(limit);
+
+    return postsList.map((post) => ({
+      id: post.id,
+      user_id: post.user_id,
+      content: post.content,
+      scheduled_at: post.scheduled_at.toISOString(),
+      is_approved: post.is_approved,
+      is_manual: post.is_manual,
+      status: post.status as PostStatus,
+      posted_at: post.posted_at?.toISOString(),
+      error_message: post.error_message ?? undefined,
+      twitter_tweet_id: post.twitter_tweet_id ?? undefined,
+      created_at: post.created_at.toISOString(),
+      updated_at: post.updated_at.toISOString(),
+    }));
+  } catch (error) {
+    throw new DatabaseError('Failed to fetch scheduled posts', error as Error);
+  }
+}
+
+/**
+ * 投稿を「投稿済み」としてマーク
+ *
+ * @param postId - 投稿ID
+ * @param twitterTweetId - TwitterツイートID
+ * @returns 更新された投稿データ
+ * @throws {DatabaseError} データベースエラー
+ */
+export async function markPostAsPosted(
+  postId: string,
+  twitterTweetId: string
+): Promise<Post> {
+  try {
+    const result = await db
+      .update(posts)
+      .set({
+        status: 'posted',
+        posted_at: new Date(),
+        twitter_tweet_id: twitterTweetId,
+        error_message: null,
+        updated_at: new Date(),
+      })
+      .where(eq(posts.id, postId))
+      .returning({
+        id: posts.id,
+        user_id: posts.user_id,
+        content: posts.content,
+        scheduled_at: posts.scheduled_at,
+        is_approved: posts.is_approved,
+        is_manual: posts.is_manual,
+        status: posts.status,
+        posted_at: posts.posted_at,
+        error_message: posts.error_message,
+        twitter_tweet_id: posts.twitter_tweet_id,
+        created_at: posts.created_at,
+        updated_at: posts.updated_at,
+      });
+
+    if (result.length === 0) {
+      throw new DatabaseError('Post not found or mark as posted failed');
+    }
+
+    const post = result[0];
+    return {
+      id: post.id,
+      user_id: post.user_id,
+      content: post.content,
+      scheduled_at: post.scheduled_at.toISOString(),
+      is_approved: post.is_approved,
+      is_manual: post.is_manual,
+      status: post.status as PostStatus,
+      posted_at: post.posted_at?.toISOString(),
+      error_message: post.error_message ?? undefined,
+      twitter_tweet_id: post.twitter_tweet_id ?? undefined,
+      created_at: post.created_at.toISOString(),
+      updated_at: post.updated_at.toISOString(),
+    };
+  } catch (error) {
+    throw new DatabaseError('Failed to mark post as posted', error as Error);
+  }
+}
+
+/**
+ * 投稿を「失敗」としてマーク
+ *
+ * @param postId - 投稿ID
+ * @param errorMessage - エラーメッセージ
+ * @returns 更新された投稿データ
+ * @throws {DatabaseError} データベースエラー
+ */
+export async function markPostAsFailed(
+  postId: string,
+  errorMessage: string
+): Promise<Post> {
+  try {
+    const result = await db
+      .update(posts)
+      .set({
+        status: 'failed',
+        error_message: errorMessage,
+        updated_at: new Date(),
+      })
+      .where(eq(posts.id, postId))
+      .returning({
+        id: posts.id,
+        user_id: posts.user_id,
+        content: posts.content,
+        scheduled_at: posts.scheduled_at,
+        is_approved: posts.is_approved,
+        is_manual: posts.is_manual,
+        status: posts.status,
+        posted_at: posts.posted_at,
+        error_message: posts.error_message,
+        twitter_tweet_id: posts.twitter_tweet_id,
+        created_at: posts.created_at,
+        updated_at: posts.updated_at,
+      });
+
+    if (result.length === 0) {
+      throw new DatabaseError('Post not found or mark as failed failed');
+    }
+
+    const post = result[0];
+    return {
+      id: post.id,
+      user_id: post.user_id,
+      content: post.content,
+      scheduled_at: post.scheduled_at.toISOString(),
+      is_approved: post.is_approved,
+      is_manual: post.is_manual,
+      status: post.status as PostStatus,
+      posted_at: post.posted_at?.toISOString(),
+      error_message: post.error_message ?? undefined,
+      twitter_tweet_id: post.twitter_tweet_id ?? undefined,
+      created_at: post.created_at.toISOString(),
+      updated_at: post.updated_at.toISOString(),
+    };
+  } catch (error) {
+    throw new DatabaseError('Failed to mark post as failed', error as Error);
   }
 }

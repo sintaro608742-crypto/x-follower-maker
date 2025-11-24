@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Box, Card, Chip, Slider, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import { Calendar } from 'lucide-react';
@@ -28,13 +28,20 @@ export const PostScheduleSettings: React.FC<PostScheduleSettingsProps> = ({
 }) => {
   const [localFrequency, setLocalFrequency] = useState(frequency);
 
+  // 親コンポーネントからのfrequency更新を反映
+  useEffect(() => {
+    setLocalFrequency(frequency);
+  }, [frequency]);
+
   const handleFrequencyChange = (_event: Event, newValue: number | number[]) => {
     const value = Array.isArray(newValue) ? newValue[0] : newValue;
     setLocalFrequency(value);
   };
 
-  const handleFrequencyCommit = () => {
-    onFrequencyChange(localFrequency);
+  const handleFrequencyCommit = (_event: React.SyntheticEvent | Event, newValue: number | number[]) => {
+    const value = Array.isArray(newValue) ? newValue[0] : newValue;
+    setLocalFrequency(value);
+    onFrequencyChange(value);
   };
 
   const handleTimeToggle = (time: string) => {

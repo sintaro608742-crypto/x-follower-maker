@@ -36,8 +36,29 @@
 
 ## 4. UI操作
 
-### 成功パターン
-（後続テストで自動蓄積されます）
+### キーワードボタンのセレクタパターン - Pass日時: 2025-11-24 10:15
+
+**テストID**: E2E-DASH-014
+**問題**: セレクタ `button:has-text("ビジネス・起業")` がキーワードボタンを検出できない。ボタン内のテキストがgeneric要素にネストされており、`:has-text()` セレクタが正しく動作しない。
+**成功パターン**:
+```typescript
+// キーワードボタンのセレクタは getByRole を使用
+const keywords = ['ビジネス・起業', 'プログラミング・技術'];
+for (const kw of keywords) {
+  await expect(page.getByRole('button', { name: kw })).toBeVisible();
+}
+```
+
+**重要なポイント**:
+- `button:has-text()` は複雑なDOM構造（ネストされた要素内のテキスト）に対応できない場合がある
+- `getByRole('button', { name: '...' })` はアクセシビリティに基づいたセレクタで、より堅牢
+- ボタン内のテキストがgeneric要素やspan要素にネストされている場合でも正しく動作する
+
+**失敗したパターン（参考）**:
+- ❌ `page.locator(\`button:has-text("${kw}")\`)` - generic要素内のテキストを検出できない
+- ❌ `page.locator('button', { hasText: kw })` - 同様の理由で失敗
+
+---
 
 ---
 
@@ -48,4 +69,4 @@
 
 ---
 
-**最終更新日**: 2025-11-24
+**最終更新日**: 2025-11-24 10:15
