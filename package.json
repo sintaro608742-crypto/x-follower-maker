@@ -17,7 +17,8 @@
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push",
     "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "demo:setup": "node scripts/setup-demo-data.mjs"
   },
   "devDependencies": {
     "@jest/globals": "^30.2.0",
