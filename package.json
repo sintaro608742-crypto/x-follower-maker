@@ -5,9 +5,9 @@
   "private": true,
   "scripts": {
     "dev": "next dev -p 8432",
-    "build": "npm run build:frontend && npm run build:backend",
+    "build": "next build",
     "build:frontend": "cd frontend && npm ci && npm run build && cd ..",
-    "build:backend": "next build",
+    "build:full": "npm run build:frontend && npm run build",
     "start": "next start -p 8432",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
