@@ -7,35 +7,48 @@ dotenv.config({ path: '.env.local' });
 const DATABASE_URL = process.env.DATABASE_URL;
 const sql = neon(DATABASE_URL);
 
-// テストユーザー情報（CLAUDE.mdより）
-const TEST_USER = {
-  email: 'test@xfollowermaker.local',
-  password: 'DevTest2025!Secure',
-};
+// デモユーザー情報（フロントエンドのログインページと一致）
+const DEMO_USERS = [
+  {
+    email: 'demo@example.com',
+    password: 'demo123',
+  },
+  {
+    email: 'admin@example.com',
+    password: 'admin123',
+  },
+];
 
 async function setupDemoData() {
   try {
     console.log('🚀 デモデータセットアップ開始...\n');
 
-    // 1. テストユーザーの作成または取得
-    console.log('1️⃣ テストユーザーの確認...');
-    let user = await sql`SELECT * FROM users WHERE email = ${TEST_USER.email}`;
+    // 1. デモユーザーの作成または取得
+    console.log('1️⃣ デモユーザーの確認...');
 
-    if (user.length === 0) {
-      console.log('   テストユーザーが存在しないため、新規作成します...');
-      const passwordHash = await bcrypt.hash(TEST_USER.password, 10);
+    const userIds = [];
 
-      user = await sql`
-        INSERT INTO users (email, password_hash, created_at, updated_at)
-        VALUES (${TEST_USER.email}, ${passwordHash}, NOW(), NOW())
-        RETURNING *
-      `;
-      console.log(`   ✅ テストユーザー作成完了: ${user[0].id}`);
-    } else {
-      console.log(`   ✅ テストユーザー確認済み: ${user[0].id}`);
+    for (const demoUser of DEMO_USERS) {
+      let user = await sql`SELECT * FROM users WHERE email = ${demoUser.email}`;
+
+      if (user.length === 0) {
+        console.log(`   ${demoUser.email} が存在しないため、新規作成します...`);
+        const passwordHash = await bcrypt.hash(demoUser.password, 10);
+
+        user = await sql`
+          INSERT INTO users (email, password_hash, created_at, updated_at)
+          VALUES (${demoUser.email}, ${passwordHash}, NOW(), NOW())
+          RETURNING *
+        `;
+        console.log(`   ✅ ユーザー作成完了: ${user[0].email} (ID: ${user[0].id})`);
+      } else {
+        console.log(`   ✅ ユーザー確認済み: ${user[0].email} (ID: ${user[0].id})`);
+      }
+
+      userIds.push(user[0].id);
     }
 
-    const userId = user[0].id;
+    const userId = userIds[0]; // demo@example.com のIDを使用
 
     // 2. スケジュール投稿の作成（過去、現在、未来）
     console.log('\n2️⃣ スケジュール投稿の作成...');
@@ -155,9 +168,10 @@ async function setupDemoData() {
     // 4. サマリー表示
     console.log('\n📊 セットアップ完了サマリー:');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log(`✅ テストユーザー: ${TEST_USER.email}`);
-    console.log(`✅ パスワード: ${TEST_USER.password}`);
-    console.log(`✅ ユーザーID: ${userId}`);
+    console.log('✅ デモユーザー:');
+    DEMO_USERS.forEach((user) => {
+      console.log(`   ${user.email} / ${user.password}`);
+    });
     console.log(`✅ スケジュール投稿: ${posts.length}件`);
     console.log(`✅ フォロワー統計: ${daysToCreate + 1}日分`);
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
