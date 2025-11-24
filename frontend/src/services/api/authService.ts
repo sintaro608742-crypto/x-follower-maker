@@ -44,9 +44,21 @@ export class AuthService {
 
       const data = await response.json();
 
-      // NextAuth returns {url: ...} on success, {error: ...} on failure
-      if (data.error) {
-        throw new Error(data.error || 'メールアドレスまたはパスワードが正しくありません');
+      // NextAuth returns {url: ...} in all cases
+      // Check if the URL contains an error
+      if (data.url && data.url.includes('/error')) {
+        const url = new URL(data.url);
+        const errorType = url.searchParams.get('error');
+        throw new Error(
+          errorType === 'CredentialsSignin'
+            ? 'メールアドレスまたはパスワードが正しくありません'
+            : `認証エラー: ${errorType}`
+        );
+      }
+
+      // Check if CSRF validation failed
+      if (data.url && data.url.includes('csrf=true')) {
+        throw new Error('CSRF検証に失敗しました。ページをリロードして再度お試しください。');
       }
 
       logger.info('User logged in successfully', { email: credentials.email });

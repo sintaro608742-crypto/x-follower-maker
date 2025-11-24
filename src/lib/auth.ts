@@ -96,12 +96,6 @@ export const authOptions: NextAuthOptions = {
     maxAge: 30 * 24 * 60 * 60, // 30日
   },
 
-  // ページ設定
-  pages: {
-    signIn: '/login',
-    error: '/login',
-  },
-
   // コールバック
   callbacks: {
     async jwt({ token, user }) {
