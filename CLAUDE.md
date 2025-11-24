@@ -414,15 +414,36 @@ PR作成時:
 
 ### 3. デプロイ
 ```yaml
+本番環境:
+  URL: https://xfollowermaker.vercel.app
+  Platform: Vercel
+  デプロイ日: 2025年11月24日
+  Status: ✅ 稼働中
+
 Vercel:
   - main ブランチへのpushで自動デプロイ
   - 環境変数はVercel UIで設定
   - プレビューデプロイは全PRで自動生成
 
+本番環境変数（Vercel Production設定済み）:
+  - DATABASE_URL（Neon PostgreSQL本番DB）
+  - TWITTER_CLIENT_ID, TWITTER_CLIENT_SECRET, TWITTER_BEARER_TOKEN
+  - GEMINI_API_KEY
+  - NEXTAUTH_URL, NEXTAUTH_SECRET
+  - ENCRYPTION_KEY
+  - QSTASH_URL, QSTASH_TOKEN, QSTASH_CURRENT_SIGNING_KEY, QSTASH_NEXT_SIGNING_KEY
+  - NEXT_PUBLIC_API_URL
+  - URL, CORS_ORIGIN
+
 デプロイ前チェック:
   - 環境変数が正しく設定されているか
   - データベースマイグレーションが完了しているか
   - ヘルスチェック (/api/health) が200を返すか
+
+本番確認済み:
+  ✅ /api/ping - 200 OK
+  ✅ /api/health - Database connected
+  ✅ /api/debug - All environment variables loaded
 ```
 
 ## トラブルシューティング
