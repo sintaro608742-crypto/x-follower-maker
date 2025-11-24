@@ -2,9 +2,8 @@ import type { User, AuthResponse, LoginRequest, SignupRequest } from '@/types';
 import { logger } from '@/lib/logger';
 
 export class AuthService {
-  // 本番環境では同じドメイン（xfollowermaker.vercel.app）を使用、開発環境ではlocalhost:8432
-  private readonly baseUrl = import.meta.env.VITE_API_BASE_URL ||
-    (import.meta.env.DEV ? 'http://localhost:8432' : '');
+  // 開発環境: http://localhost:8432, 本番環境: 空文字列（同じドメイン）
+  private readonly baseUrl = import.meta.env.VITE_API_BASE_URL ?? '';
 
   /**
    * ログイン処理
