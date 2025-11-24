@@ -126,6 +126,16 @@ npm run dev
 - **バックエンド**: http://localhost:8432
 - **フロントエンド**: http://localhost:3247
 
+## 🎉 ベータプログラム
+
+**Phase 1 MVP完成！ベータユーザー募集中**
+
+ベータユーザーとして参加を希望される方は、以下のドキュメントをご覧ください:
+- **ベータユーザーガイド**: [`docs/BETA_USER_GUIDE.md`](docs/BETA_USER_GUIDE.md)
+- **招待プロセス**: [`docs/BETA_INVITATION.md`](docs/BETA_INVITATION.md)
+
+**本番環境**: https://xfollowermaker.vercel.app
+
 ## 🚀 使い方
 
 ### 1. アカウント作成
