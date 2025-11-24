@@ -22,6 +22,11 @@ let isShuttingDown = false;
  * サーバー起動時に実行される
  */
 export async function register() {
+  // Vercel環境では無効化（サーバーレス環境ではグレースフルシャットダウン不要）
+  if (process.env.VERCEL === '1') {
+    return;
+  }
+
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     logger.info('Server starting...');
 
