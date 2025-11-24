@@ -45,16 +45,6 @@ const nextConfig = {
     ];
   },
 
-  // リダイレクト設定
-  async redirects() {
-    return [
-      {
-        source: '/',
-        destination: '/dashboard',
-        permanent: false,
-      },
-    ];
-  },
 };
 
 export default nextConfig;
