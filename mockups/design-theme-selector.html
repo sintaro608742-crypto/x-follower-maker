@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Xフォロワーメーカー - デザインテーマ選択</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', 'Noto Sans JP', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 48px 24px;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 64px;
+      color: white;
+    }
+
+    .header h1 {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+
+    .header p {
+      font-size: 18px;
+      opacity: 0.95;
+    }
+
+    .themes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 32px;
+      margin-bottom: 48px;
+    }
+
+    .theme-card {
+      background: white;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.15);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+    }
+
+    .theme-card:hover {
+      transform: translateY(-8px);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+    }
+
+    .theme-card.selected {
+      border: 4px solid #1DA1F2;
+      transform: translateY(-8px);
+    }
+
+    .theme-card.selected::after {
+      content: '✓ 選択中';
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      background: #1DA1F2;
+      color: white;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      z-index: 10;
+    }
+
+    .theme-header {
+      padding: 24px;
+      border-bottom: 1px solid #E5E7EB;
+    }
+
+    .theme-number {
+      display: inline-block;
+      background: #1DA1F2;
+      color: white;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      text-align: center;
+      line-height: 32px;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .theme-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: #111827;
+    }
+
+    .theme-description {
+      font-size: 14px;
+      color: #6B7280;
+      line-height: 1.5;
+    }
+
+    .color-palette {
+      display: flex;
+      gap: 8px;
+      padding: 20px 24px;
+      background: #F9FAFB;
+      border-bottom: 1px solid #E5E7EB;
+    }
+
+    .color-swatch {
+      flex: 1;
+      height: 48px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      position: relative;
+      transition: transform 0.2s ease;
+    }
+
+    .color-swatch:hover {
+      transform: scale(1.1);
+    }
+
+    .color-swatch::after {
+      content: attr(data-color);
+      position: absolute;
+      bottom: -24px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      color: #6B7280;
+      white-space: nowrap;
+    }
+
+    .mockup-preview {
+      padding: 24px;
+    }
+
+    .mockup-card {
+      background: #FFFFFF;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .mockup-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .mockup-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: #111827;
+    }
+
+    .mockup-badge {
+      font-size: 12px;
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+
+    .stat-number {
+      font-size: 32px;
+      font-weight: 700;
+      font-family: 'SF Mono', monospace;
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: #6B7280;
+    }
+
+    .chart-placeholder {
+      height: 120px;
+      border-radius: 8px;
+      display: flex;
+      align-items: flex-end;
+      gap: 8px;
+      padding: 12px;
+      margin-top: 16px;
+    }
+
+    .chart-bar {
+      flex: 1;
+      border-radius: 4px 4px 0 0;
+      transition: height 0.3s ease;
+    }
+
+    .button-mockup {
+      padding: 12px 24px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: inline-block;
+      text-align: center;
+    }
+
+    .button-mockup:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    /* Theme 1: Modern Minimal */
+    .theme-1 .mockup-card {
+      background: linear-gradient(to bottom, #FFFFFF, #F9FAFB);
+      border: 1px solid #E5E7EB;
+    }
+
+    .theme-1 .mockup-badge {
+      background: #E0F2FE;
+      color: #0284C7;
+    }
+
+    .theme-1 .stat-number {
+      color: #1DA1F2;
+    }
+
+    .theme-1 .chart-placeholder {
+      background: linear-gradient(to top, #E0F2FE, transparent);
+    }
+
+    .theme-1 .chart-bar {
+      background: linear-gradient(to top, #1DA1F2, #60A5FA);
+    }
+
+    .theme-1 .button-mockup {
+      background: #1DA1F2;
+      color: white;
+    }
+
+    /* Theme 2: Dynamic */
+    .theme-2 .mockup-card {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+
+    .theme-2 .mockup-title {
+      color: white;
+    }
+
+    .theme-2 .stat-number {
+      color: #FCD34D;
+    }
+
+    .theme-2 .stat-label {
+      color: rgba(255,255,255,0.8);
+    }
+
+    .theme-2 .mockup-badge {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      backdrop-filter: blur(10px);
+    }
+
+    .theme-2 .chart-placeholder {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .theme-2 .chart-bar {
+      background: linear-gradient(to top, #F59E0B, #FCD34D);
+    }
+
+    .theme-2 .button-mockup {
+      background: linear-gradient(135deg, #F59E0B, #EF4444);
+      color: white;
+    }
+
+    /* Theme 3: Professional */
+    .theme-3 .mockup-card {
+      background: #FFFFFF;
+      border: 2px solid #E5E7EB;
+    }
+
+    .theme-3 .mockup-badge {
+      background: #F3F4F6;
+      color: #4B5563;
+    }
+
+    .theme-3 .stat-number {
+      color: #111827;
+    }
+
+    .theme-3 .chart-placeholder {
+      background: #F9FAFB;
+      border: 1px solid #E5E7EB;
+    }
+
+    .theme-3 .chart-bar {
+      background: linear-gradient(to top, #6B7280, #9CA3AF);
+    }
+
+    .theme-3 .button-mockup {
+      background: #111827;
+      color: white;
+    }
+
+    /* Theme 4: Friendly */
+    .theme-4 .mockup-card {
+      background: linear-gradient(to bottom right, #FEF3C7, #FDE68A);
+      border: 2px solid #FCD34D;
+    }
+
+    .theme-4 .mockup-title {
+      color: #92400E;
+    }
+
+    .theme-4 .stat-number {
+      color: #10B981;
+    }
+
+    .theme-4 .stat-label {
+      color: #92400E;
+    }
+
+    .theme-4 .mockup-badge {
+      background: #DCFCE7;
+      color: #166534;
+    }
+
+    .theme-4 .chart-placeholder {
+      background: rgba(255,255,255,0.6);
+    }
+
+    .theme-4 .chart-bar {
+      background: linear-gradient(to top, #10B981, #34D399);
+    }
+
+    .theme-4 .button-mockup {
+      background: #10B981;
+      color: white;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 32px 24px;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    .footer h3 {
+      font-size: 20px;
+      margin-bottom: 16px;
+      color: #111827;
+    }
+
+    .footer p {
+      color: #6B7280;
+      margin-bottom: 8px;
+    }
+
+    .selected-theme {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1DA1F2;
+      margin-top: 16px;
+    }
+
+    @media (max-width: 768px) {
+      body {
+        padding: 24px 16px;
+      }
+
+      .header h1 {
+        font-size: 28px;
+      }
+
+      .header p {
+        font-size: 16px;
+      }
+
+      .themes-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+
+      .theme-title {
+        font-size: 20px;
+      }
+
+      .stat-number {
+        font-size: 24px;
+      }
+    }
+
+    @keyframes pulse {
+      0%, 100% {
+        opacity: 1;
+      }
+      50% {
+        opacity: 0.5;
+      }
+    }
+
+    .theme-card:active {
+      animation: pulse 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎨 デザインテーマを選択</h1>
+      <p>Xフォロワーメーカーに最適な4つのデザインテーマから選んでください</p>
+    </div>
+
+    <div class="themes-grid">
+      <!-- Theme 1: Modern Minimal -->
+      <div class="theme-card theme-1" data-theme="1">
+        <div class="theme-header">
+          <div class="theme-number">1</div>
+          <h2 class="theme-title">モダン・ミニマル</h2>
+          <p class="theme-description">
+            シンプルで洗練された、余白を活かしたデザイン。直感的な操作性と視認性を重視し、AIの機能に集中できる構成。
+          </p>
+        </div>
+        <div class="color-palette">
+          <div class="color-swatch" style="background: #1DA1F2;" data-color="#1DA1F2"></div>
+          <div class="color-swatch" style="background: #10B981;" data-color="#10B981"></div>
+          <div class="color-swatch" style="background: #F9FAFB;" data-color="#F9FAFB"></div>
+          <div class="color-swatch" style="background: #6B7280;" data-color="#6B7280"></div>
+        </div>
+        <div class="mockup-preview">
+          <div class="mockup-card">
+            <div class="mockup-header">
+              <span class="mockup-title">フォロワー数</span>
+              <span class="mockup-badge">+12%</span>
+            </div>
+            <div class="stat-number">1,456</div>
+            <div class="stat-label">今月の増加数: +124</div>
+            <div class="chart-placeholder">
+              <div class="chart-bar" style="height: 40%;"></div>
+              <div class="chart-bar" style="height: 55%;"></div>
+              <div class="chart-bar" style="height: 45%;"></div>
+              <div class="chart-bar" style="height: 70%;"></div>
+              <div class="chart-bar" style="height: 85%;"></div>
+              <div class="chart-bar" style="height: 100%;"></div>
+            </div>
+          </div>
+          <button class="button-mockup">投稿を確認</button>
+        </div>
+      </div>
+
+      <!-- Theme 2: Dynamic -->
+      <div class="theme-card theme-2" data-theme="2">
+        <div class="theme-header">
+          <div class="theme-number">2</div>
+          <h2 class="theme-title">ダイナミック</h2>
+          <p class="theme-description">
+            グラデーション、大胆な配色、活力あるデザイン。AIの凄さを視覚的に表現し、成長の実感を強調する演出。
+          </p>
+        </div>
+        <div class="color-palette">
+          <div class="color-swatch" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);"></div>
+          <div class="color-swatch" style="background: linear-gradient(135deg, #F59E0B, #EF4444);"></div>
+          <div class="color-swatch" style="background: #FCD34D;" data-color="#FCD34D"></div>
+          <div class="color-swatch" style="background: #1DA1F2;" data-color="#1DA1F2"></div>
+        </div>
+        <div class="mockup-preview">
+          <div class="mockup-card">
+            <div class="mockup-header">
+              <span class="mockup-title">フォロワー数</span>
+              <span class="mockup-badge">+12%</span>
+            </div>
+            <div class="stat-number">1,456</div>
+            <div class="stat-label">今月の増加数: +124</div>
+            <div class="chart-placeholder">
+              <div class="chart-bar" style="height: 40%;"></div>
+              <div class="chart-bar" style="height: 55%;"></div>
+              <div class="chart-bar" style="height: 45%;"></div>
+              <div class="chart-bar" style="height: 70%;"></div>
+              <div class="chart-bar" style="height: 85%;"></div>
+              <div class="chart-bar" style="height: 100%;"></div>
+            </div>
+          </div>
+          <button class="button-mockup">投稿を確認</button>
+        </div>
+      </div>
+
+      <!-- Theme 3: Professional -->
+      <div class="theme-card theme-3" data-theme="3">
+        <div class="theme-header">
+          <div class="theme-number">3</div>
+          <h2 class="theme-title">プロフェッショナル</h2>
+          <p class="theme-description">
+            ビジネスライク、信頼感のあるデザイン。落ち着いた配色とクリアな階層構造で、データの分析に集中できる構成。
+          </p>
+        </div>
+        <div class="color-palette">
+          <div class="color-swatch" style="background: #111827;" data-color="#111827"></div>
+          <div class="color-swatch" style="background: #6B7280;" data-color="#6B7280"></div>
+          <div class="color-swatch" style="background: #E5E7EB;" data-color="#E5E7EB"></div>
+          <div class="color-swatch" style="background: #1DA1F2;" data-color="#1DA1F2"></div>
+        </div>
+        <div class="mockup-preview">
+          <div class="mockup-card">
+            <div class="mockup-header">
+              <span class="mockup-title">フォロワー数</span>
+              <span class="mockup-badge">+12%</span>
+            </div>
+            <div class="stat-number">1,456</div>
+            <div class="stat-label">今月の増加数: +124</div>
+            <div class="chart-placeholder">
+              <div class="chart-bar" style="height: 40%;"></div>
+              <div class="chart-bar" style="height: 55%;"></div>
+              <div class="chart-bar" style="height: 45%;"></div>
+              <div class="chart-bar" style="height: 70%;"></div>
+              <div class="chart-bar" style="height: 85%;"></div>
+              <div class="chart-bar" style="height: 100%;"></div>
+            </div>
+          </div>
+          <button class="button-mockup">投稿を確認</button>
+        </div>
+      </div>
+
+      <!-- Theme 4: Friendly -->
+      <div class="theme-card theme-4" data-theme="4">
+        <div class="theme-header">
+          <div class="theme-number">4</div>
+          <h2 class="theme-title">フレンドリー</h2>
+          <p class="theme-description">
+            親しみやすい、柔らかい印象のデザイン。暖色系の配色とやさしい曲線で、誰でも気軽に使える雰囲気を演出。
+          </p>
+        </div>
+        <div class="color-palette">
+          <div class="color-swatch" style="background: #FCD34D;" data-color="#FCD34D"></div>
+          <div class="color-swatch" style="background: #10B981;" data-color="#10B981"></div>
+          <div class="color-swatch" style="background: #FEF3C7;" data-color="#FEF3C7"></div>
+          <div class="color-swatch" style="background: #92400E;" data-color="#92400E"></div>
+        </div>
+        <div class="mockup-preview">
+          <div class="mockup-card">
+            <div class="mockup-header">
+              <span class="mockup-title">フォロワー数</span>
+              <span class="mockup-badge">+12%</span>
+            </div>
+            <div class="stat-number">1,456</div>
+            <div class="stat-label">今月の増加数: +124</div>
+            <div class="chart-placeholder">
+              <div class="chart-bar" style="height: 40%;"></div>
+              <div class="chart-bar" style="height: 55%;"></div>
+              <div class="chart-bar" style="height: 45%;"></div>
+              <div class="chart-bar" style="height: 70%;"></div>
+              <div class="chart-bar" style="height: 85%;"></div>
+              <div class="chart-bar" style="height: 100%;"></div>
+            </div>
+          </div>
+          <button class="button-mockup">投稿を確認</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">
+      <h3>選択したテーマ</h3>
+      <p>カードをクリックしてテーマを選択してください</p>
+      <div class="selected-theme" id="selectedTheme">未選択</div>
+    </div>
+  </div>
+
+  <script>
+    const themeCards = document.querySelectorAll('.theme-card');
+    const selectedThemeDisplay = document.getElementById('selectedTheme');
+
+    const themeNames = {
+      '1': 'テーマ1: モダン・ミニマル',
+      '2': 'テーマ2: ダイナミック',
+      '3': 'テーマ3: プロフェッショナル',
+      '4': 'テーマ4: フレンドリー'
+    };
+
+    themeCards.forEach(card => {
+      card.addEventListener('click', () => {
+        // Remove selected class from all cards
+        themeCards.forEach(c => c.classList.remove('selected'));
+
+        // Add selected class to clicked card
+        card.classList.add('selected');
+
+        // Update selected theme display
+        const themeNumber = card.dataset.theme;
+        selectedThemeDisplay.textContent = themeNames[themeNumber];
+
+        // Add animation effect
+        card.style.animation = 'pulse 0.3s ease';
+        setTimeout(() => {
+          card.style.animation = '';
+        }, 300);
+      });
+
+      // Add hover animation to chart bars
+      card.addEventListener('mouseenter', () => {
+        const bars = card.querySelectorAll('.chart-bar');
+        bars.forEach((bar, index) => {
+          setTimeout(() => {
+            bar.style.transform = 'scaleY(1.1)';
+          }, index * 50);
+        });
+      });
+
+      card.addEventListener('mouseleave', () => {
+        const bars = card.querySelectorAll('.chart-bar');
+        bars.forEach(bar => {
+          bar.style.transform = 'scaleY(1)';
+        });
+      });
+    });
+
+    // Keyboard navigation
+    document.addEventListener('keydown', (e) => {
+      if (e.key >= '1' && e.key <= '4') {
+        const card = document.querySelector(`.theme-card[data-theme="${e.key}"]`);
+        if (card) {
+          card.click();
+          card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,49 @@
+{
+  "name": "xfollowermaker",
+  "version": "1.0.0",
+  "description": "Xフォロワーメーカー - Phase 1 MVP",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 8432",
+    "build": "next build",
+    "start": "next start -p 8432",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:report": "playwright show-report tests/temp/playwright-report",
+    "test:db": "tsx test-db-setup.ts",
+    "test:integration": "jest --config jest.config.integration.js --runInBand",
+    "setup:db": "node setup-db.js",
+    "db:generate": "drizzle-kit generate",
+    "db:push": "drizzle-kit push",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "devDependencies": {
+    "@jest/globals": "^30.2.0",
+    "@playwright/test": "^1.40.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.0",
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20.19.25",
+    "@types/react": "^18.3.27",
+    "@types/react-dom": "^18.3.7",
+    "drizzle-orm": "^0.44.7",
+    "jest": "^30.2.0",
+    "next-auth": "^4.24.13",
+    "ts-jest": "^29.4.5",
+    "tsx": "^4.20.6",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^17.2.3",
+    "drizzle-kit": "^0.31.7",
+    "next": "^14.2.33",
+    "postgres": "^3.4.7",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zod": "^4.1.12"
+  }
+}

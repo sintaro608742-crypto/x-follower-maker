@@ -1,0 +1,1077 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI投稿プレビュー・編集 - モックアップ</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+JP:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', 'Noto Sans JP', sans-serif;
+      background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
+      color: #1F2937;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 32px 24px;
+    }
+
+    /* Header Section */
+    .page-header {
+      margin-bottom: 32px;
+      padding: 24px 0;
+    }
+
+    .page-header h1 {
+      font-size: 36px;
+      font-weight: 800;
+      color: #111827;
+      margin-bottom: 8px;
+      background: linear-gradient(135deg, #1DA1F2 0%, #0E7FC7 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .page-header p {
+      font-size: 16px;
+      color: #6B7280;
+      font-weight: 500;
+    }
+
+    /* Action Bar */
+    .action-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 32px;
+      padding: 20px 24px;
+      background: linear-gradient(135deg, #FFFFFF 0%, #F9FAFB 100%);
+      border-radius: 16px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .action-bar-left {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .filter-chip {
+      padding: 10px 20px;
+      border: 2px solid #E5E7EB;
+      border-radius: 24px;
+      background: #FFFFFF;
+      font-size: 14px;
+      font-weight: 600;
+      color: #6B7280;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .filter-chip.active {
+      background: linear-gradient(135deg, #1DA1F2 0%, #0E7FC7 100%);
+      color: #FFFFFF;
+      border-color: #1DA1F2;
+      box-shadow: 0 4px 12px rgba(29, 161, 242, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .filter-chip:hover:not(.active) {
+      background: #F0F9FF;
+      border-color: #1DA1F2;
+      transform: translateY(-2px);
+    }
+
+    .btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, #1DA1F2 0%, #0E7FC7 100%);
+      color: #FFFFFF;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-3px) scale(1.02);
+      box-shadow: 0 8px 16px rgba(29, 161, 242, 0.4);
+    }
+
+    .btn-primary:active {
+      transform: translateY(-1px) scale(0.98);
+    }
+
+    /* Main Layout: 2 Column */
+    .main-layout {
+      display: grid;
+      grid-template-columns: 1fr 420px;
+      gap: 32px;
+    }
+
+    /* Posts List Section */
+    .posts-section {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .date-group {
+      margin-bottom: 32px;
+    }
+
+    .date-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background: linear-gradient(135deg, #FFFFFF 0%, #F9FAFB 100%);
+      border-radius: 12px;
+      margin-bottom: 16px;
+      cursor: pointer;
+      user-select: none;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+      transition: all 0.3s;
+    }
+
+    .date-header:hover {
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+    }
+
+    .date-header h2 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #111827;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .post-count {
+      font-size: 14px;
+      font-weight: 600;
+      color: #6B7280;
+      background: #FFFFFF;
+      padding: 6px 16px;
+      border-radius: 16px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    /* Post Card */
+    .post-card {
+      background: linear-gradient(135deg, #FFFFFF 0%, #FAFBFC 100%);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.08);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border-left: 5px solid transparent;
+      position: relative;
+    }
+
+    .post-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      border-radius: 16px;
+      padding: 2px;
+      background: transparent;
+      -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      transition: all 0.3s;
+      opacity: 0;
+    }
+
+    .post-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px rgba(0,0,0,0.1), 0 4px 8px rgba(0,0,0,0.06);
+    }
+
+    .post-card.scheduled {
+      border-left-color: #1DA1F2;
+    }
+
+    .post-card.posted {
+      border-left-color: #10B981;
+    }
+
+    .post-card.failed {
+      border-left-color: #EF4444;
+    }
+
+    .post-card.unapproved {
+      border-left-color: #F59E0B;
+    }
+
+    .post-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+    }
+
+    .post-status {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .status-badge {
+      padding: 8px 16px;
+      border-radius: 16px;
+      font-size: 14px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    }
+
+    .status-badge.scheduled {
+      background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%);
+      color: #1E40AF;
+    }
+
+    .status-badge.posted {
+      background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
+      color: #065F46;
+    }
+
+    .status-badge.failed {
+      background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+      color: #991B1B;
+    }
+
+    .status-badge.unapproved {
+      background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%);
+      color: #92400E;
+    }
+
+    .status-description {
+      font-size: 12px;
+      color: #6B7280;
+      font-weight: 500;
+      padding-left: 8px;
+    }
+
+    .scheduled-time {
+      font-size: 14px;
+      font-weight: 600;
+      color: #6B7280;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 4px;
+    }
+
+    .post-content {
+      font-size: 16px;
+      color: #1F2937;
+      line-height: 1.7;
+      margin-bottom: 16px;
+      white-space: pre-wrap;
+      font-weight: 500;
+    }
+
+    .post-content .hashtag {
+      color: #1DA1F2;
+      font-weight: 600;
+    }
+
+    .post-content .mention {
+      color: #1DA1F2;
+      font-weight: 600;
+    }
+
+    .character-count-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+      padding: 8px 12px;
+      background: #F9FAFB;
+      border-radius: 8px;
+    }
+
+    .character-count {
+      font-size: 14px;
+      font-weight: 700;
+      color: #6B7280;
+      font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+    }
+
+    .character-count.warning {
+      color: #F59E0B;
+    }
+
+    .character-count.error {
+      color: #EF4444;
+    }
+
+    .character-limit {
+      font-size: 12px;
+      color: #9CA3AF;
+      font-weight: 500;
+    }
+
+    /* Engagement Stats */
+    .engagement-stats {
+      display: flex;
+      gap: 24px;
+      padding: 16px;
+      background: linear-gradient(135deg, #F9FAFB 0%, #F3F4F6 100%);
+      border-radius: 12px;
+      margin-bottom: 16px;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+    }
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      color: #6B7280;
+      font-weight: 500;
+    }
+
+    .stat-item i {
+      width: 18px;
+      height: 18px;
+    }
+
+    .stat-value {
+      font-weight: 700;
+      color: #1F2937;
+      font-family: 'SF Mono', 'Monaco', 'Consolas', monospace;
+      font-size: 16px;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: #9CA3AF;
+      margin-left: 4px;
+    }
+
+    /* Post Actions */
+    .post-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .btn-icon {
+      padding: 10px 20px;
+      border: 2px solid transparent;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.08);
+    }
+
+    .btn-icon:hover {
+      transform: translateY(-2px) scale(1.05);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    }
+
+    .btn-icon:active {
+      transform: translateY(0) scale(0.98);
+    }
+
+    .btn-icon.edit {
+      background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%);
+      color: #1E40AF;
+      border-color: #BFDBFE;
+    }
+
+    .btn-icon.edit:hover {
+      background: linear-gradient(135deg, #BFDBFE 0%, #93C5FD 100%);
+      border-color: #60A5FA;
+    }
+
+    .btn-icon.regenerate {
+      background: linear-gradient(135deg, #E0E7FF 0%, #C7D2FE 100%);
+      color: #4338CA;
+      border-color: #C7D2FE;
+    }
+
+    .btn-icon.regenerate:hover {
+      background: linear-gradient(135deg, #C7D2FE 0%, #A5B4FC 100%);
+      border-color: #818CF8;
+    }
+
+    .btn-icon.delete {
+      background: linear-gradient(135deg, #FEE2E2 0%, #FECACA 100%);
+      color: #991B1B;
+      border-color: #FECACA;
+    }
+
+    .btn-icon.delete:hover {
+      background: linear-gradient(135deg, #FECACA 0%, #FCA5A5 100%);
+      border-color: #F87171;
+    }
+
+    .btn-icon.approve {
+      background: linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%);
+      color: #065F46;
+      border-color: #A7F3D0;
+    }
+
+    .btn-icon.approve:hover {
+      background: linear-gradient(135deg, #A7F3D0 0%, #6EE7B7 100%);
+      border-color: #34D399;
+    }
+
+    .btn-icon.retry {
+      background: linear-gradient(135deg, #1DA1F2 0%, #0E7FC7 100%);
+      color: #FFFFFF;
+      border-color: #1DA1F2;
+    }
+
+    .btn-icon.retry:hover {
+      background: linear-gradient(135deg, #0E7FC7 0%, #0369A1 100%);
+      box-shadow: 0 4px 12px rgba(29, 161, 242, 0.4);
+    }
+
+    /* Error Alert */
+    .error-alert {
+      margin-bottom: 16px;
+      padding: 16px;
+      background: linear-gradient(135deg, #FEE2E2 0%, #FED7D7 100%);
+      border-radius: 12px;
+      border-left: 4px solid #EF4444;
+      box-shadow: 0 2px 4px rgba(239, 68, 68, 0.1);
+    }
+
+    .error-alert-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .error-alert-title {
+      font-weight: 700;
+      color: #991B1B;
+      font-size: 14px;
+    }
+
+    .error-alert-message {
+      color: #991B1B;
+      font-size: 14px;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    /* Preview Panel (Right Side) */
+    .preview-panel {
+      position: sticky;
+      top: 24px;
+      height: fit-content;
+    }
+
+    .preview-card {
+      background: linear-gradient(135deg, #FFFFFF 0%, #F9FAFB 100%);
+      border-radius: 16px;
+      padding: 24px;
+      box-shadow: 0 8px 16px rgba(0,0,0,0.08), 0 2px 4px rgba(0,0,0,0.06);
+    }
+
+    .preview-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 16px;
+      border-bottom: 2px solid #F3F4F6;
+    }
+
+    .preview-header h3 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    /* Tweet Preview */
+    .tweet-preview {
+      border: 2px solid #E5E7EB;
+      border-radius: 16px;
+      padding: 20px;
+      background: #FFFFFF;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.04);
+    }
+
+    .tweet-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #FFFFFF;
+      font-weight: 700;
+      font-size: 20px;
+      box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    .tweet-user-info {
+      flex: 1;
+    }
+
+    .tweet-username {
+      font-weight: 700;
+      color: #1F2937;
+      font-size: 15px;
+    }
+
+    .tweet-handle {
+      color: #6B7280;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .tweet-content {
+      font-size: 16px;
+      line-height: 1.7;
+      color: #1F2937;
+      margin-bottom: 16px;
+      white-space: pre-wrap;
+      font-weight: 500;
+    }
+
+    .tweet-content .hashtag {
+      color: #1DA1F2;
+      font-weight: 600;
+    }
+
+    .tweet-content .mention {
+      color: #1DA1F2;
+      font-weight: 600;
+    }
+
+    .tweet-timestamp {
+      color: #6B7280;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 16px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid #E5E7EB;
+    }
+
+    .tweet-actions {
+      display: flex;
+      justify-content: space-around;
+      padding-top: 8px;
+    }
+
+    .tweet-action-btn {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #6B7280;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      padding: 8px 12px;
+      border-radius: 8px;
+    }
+
+    .tweet-action-btn:hover {
+      color: #1DA1F2;
+      background: #F0F9FF;
+      transform: scale(1.1);
+    }
+
+    .hint-box {
+      margin-top: 20px;
+      padding: 16px;
+      background: linear-gradient(135deg, #F0F9FF 0%, #E0F2FE 100%);
+      border-radius: 12px;
+      border-left: 4px solid #1DA1F2;
+      box-shadow: 0 2px 4px rgba(29, 161, 242, 0.1);
+    }
+
+    .hint-box-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .hint-box-title {
+      font-weight: 700;
+      color: #1E40AF;
+      font-size: 14px;
+    }
+
+    .hint-box-text {
+      font-size: 14px;
+      color: #1E40AF;
+      font-weight: 500;
+      line-height: 1.5;
+    }
+
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 64px 32px;
+      background: linear-gradient(135deg, #FFFFFF 0%, #F9FAFB 100%);
+      border-radius: 16px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+
+    .empty-state i {
+      width: 64px;
+      height: 64px;
+      color: #9CA3AF;
+      margin-bottom: 16px;
+    }
+
+    .empty-state h3 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #1F2937;
+      margin-bottom: 8px;
+    }
+
+    .empty-state p {
+      font-size: 16px;
+      color: #6B7280;
+      margin-bottom: 24px;
+      font-weight: 500;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .main-layout {
+        grid-template-columns: 1fr;
+      }
+
+      .preview-panel {
+        position: static;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .container {
+        padding: 16px;
+      }
+
+      .page-header h1 {
+        font-size: 28px;
+      }
+
+      .action-bar {
+        flex-direction: column;
+        gap: 16px;
+        align-items: stretch;
+      }
+
+      .action-bar-left {
+        flex-wrap: wrap;
+      }
+
+      .post-actions {
+        justify-content: stretch;
+      }
+
+      .btn-icon {
+        flex: 1;
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Page Header -->
+    <div class="page-header">
+      <h1>AI投稿プレビュー・編集</h1>
+      <p>AIが生成した投稿を確認・編集して、質の高いツイートを投稿しましょう</p>
+    </div>
+
+    <!-- Action Bar -->
+    <div class="action-bar">
+      <div class="action-bar-left">
+        <div class="filter-chip active">今日</div>
+        <div class="filter-chip">明日</div>
+        <div class="filter-chip">今週</div>
+        <div class="filter-chip">すべて</div>
+      </div>
+      <button class="btn btn-primary">
+        <i data-lucide="plus" style="width: 20px; height: 20px;"></i>
+        手動投稿を追加
+      </button>
+    </div>
+
+    <!-- Main Layout: 2 Columns -->
+    <div class="main-layout">
+      <!-- Posts List -->
+      <div class="posts-section">
+        <!-- Today's Posts -->
+        <div class="date-group">
+          <div class="date-header">
+            <h2>
+              <i data-lucide="calendar" style="width: 20px; height: 20px;"></i>
+              今日（11月21日）
+            </h2>
+            <span class="post-count">4件</span>
+          </div>
+
+          <!-- Post Card 1: Scheduled -->
+          <div class="post-card scheduled">
+            <div class="post-header">
+              <div class="post-status">
+                <span class="status-badge scheduled">
+                  <i data-lucide="clock" style="width: 16px; height: 16px;"></i>
+                  予約中
+                </span>
+                <span class="status-description">自動で投稿されます</span>
+                <span class="scheduled-time">
+                  <i data-lucide="calendar-clock" style="width: 14px; height: 14px;"></i>
+                  9:00 に投稿予定
+                </span>
+              </div>
+            </div>
+            <div class="post-content">プログラミング初心者が最初に学ぶべきは「デバッグ力」です💡
+
+エラーメッセージを読む習慣をつけるだけで、成長速度が3倍変わります。
+
+最初は怖いかもしれませんが、エラーは敵ではなく「先生」です✨
+
+<span class="hashtag">#プログラミング初心者</span> <span class="hashtag">#エンジニア</span></div>
+            <div class="character-count-wrapper">
+              <span class="character-count">156/280</span>
+              <span class="character-limit">残り 124文字</span>
+            </div>
+            <div class="post-actions">
+              <button class="btn-icon edit">
+                <i data-lucide="pencil" style="width: 16px; height: 16px;"></i>
+                編集する
+              </button>
+              <button class="btn-icon regenerate">
+                <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i>
+                AIで再生成
+              </button>
+              <button class="btn-icon delete">
+                <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                削除
+              </button>
+            </div>
+          </div>
+
+          <!-- Post Card 2: Posted -->
+          <div class="post-card posted">
+            <div class="post-header">
+              <div class="post-status">
+                <span class="status-badge posted">
+                  <i data-lucide="check-circle" style="width: 16px; height: 16px;"></i>
+                  投稿済み
+                </span>
+                <span class="status-description">Xに投稿されました</span>
+                <span class="scheduled-time">
+                  <i data-lucide="calendar-clock" style="width: 14px; height: 14px;"></i>
+                  12:00 に投稿
+                </span>
+              </div>
+            </div>
+            <div class="post-content">AIを使った開発で生産性が2倍になりました🚀
+
+特にコードレビューとドキュメント作成が劇的に効率化。
+
+人間の創造性とAIの速度を組み合わせることで、より本質的な仕事に集中できます。
+
+<span class="hashtag">#AI開発</span> <span class="hashtag">#生産性向上</span></div>
+            <div class="character-count-wrapper">
+              <span class="character-count">124/280</span>
+              <span class="character-limit">残り 156文字</span>
+            </div>
+            <div class="engagement-stats">
+              <div class="stat-item">
+                <i data-lucide="heart" style="width: 18px; height: 18px;"></i>
+                <span class="stat-value">23</span>
+                <span class="stat-label">いいね</span>
+              </div>
+              <div class="stat-item">
+                <i data-lucide="repeat-2" style="width: 18px; height: 18px;"></i>
+                <span class="stat-value">8</span>
+                <span class="stat-label">リポスト</span>
+              </div>
+              <div class="stat-item">
+                <i data-lucide="message-circle" style="width: 18px; height: 18px;"></i>
+                <span class="stat-value">5</span>
+                <span class="stat-label">返信</span>
+              </div>
+            </div>
+            <div class="post-actions">
+              <button class="btn-icon edit">
+                <i data-lucide="external-link" style="width: 16px; height: 16px;"></i>
+                Xで見る
+              </button>
+              <button class="btn-icon delete">
+                <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                削除
+              </button>
+            </div>
+          </div>
+
+          <!-- Post Card 3: Unapproved -->
+          <div class="post-card unapproved">
+            <div class="post-header">
+              <div class="post-status">
+                <span class="status-badge unapproved">
+                  <i data-lucide="alert-circle" style="width: 16px; height: 16px;"></i>
+                  承認待ち
+                </span>
+                <span class="status-description">承認すると投稿されます</span>
+                <span class="scheduled-time">
+                  <i data-lucide="calendar-clock" style="width: 14px; height: 14px;"></i>
+                  18:00 に投稿予定
+                </span>
+              </div>
+            </div>
+            <div class="post-content">TypeScriptの型システムを理解すると、バグが80%減ります。
+
+最初は面倒に感じるかもしれませんが、長期的には必ず報われる投資です。
+
+<span class="hashtag">#TypeScript</span> <span class="hashtag">#型安全</span></div>
+            <div class="character-count-wrapper">
+              <span class="character-count">98/280</span>
+              <span class="character-limit">残り 182文字</span>
+            </div>
+            <div class="post-actions">
+              <button class="btn-icon approve">
+                <i data-lucide="check" style="width: 16px; height: 16px;"></i>
+                承認する
+              </button>
+              <button class="btn-icon edit">
+                <i data-lucide="pencil" style="width: 16px; height: 16px;"></i>
+                編集する
+              </button>
+              <button class="btn-icon regenerate">
+                <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i>
+                AIで再生成
+              </button>
+              <button class="btn-icon delete">
+                <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                削除
+              </button>
+            </div>
+          </div>
+
+          <!-- Post Card 4: Failed -->
+          <div class="post-card failed">
+            <div class="post-header">
+              <div class="post-status">
+                <span class="status-badge failed">
+                  <i data-lucide="x-circle" style="width: 16px; height: 16px;"></i>
+                  投稿エラー
+                </span>
+                <span class="status-description">投稿に失敗しました</span>
+                <span class="scheduled-time">
+                  <i data-lucide="calendar-clock" style="width: 14px; height: 14px;"></i>
+                  21:00 に投稿予定
+                </span>
+              </div>
+            </div>
+            <div class="post-content">クリーンコードの本質は「読みやすさ」です📖
+
+変数名、関数名、コメント、すべては未来の自分と仲間のため。
+
+コードは書く時間より読む時間の方が圧倒的に長いことを忘れずに。
+
+<span class="hashtag">#クリーンコード</span></div>
+            <div class="character-count-wrapper">
+              <span class="character-count">112/280</span>
+              <span class="character-limit">残り 168文字</span>
+            </div>
+            <div class="error-alert">
+              <div class="error-alert-header">
+                <i data-lucide="alert-triangle" style="width: 16px; height: 16px; color: #991B1B;"></i>
+                <span class="error-alert-title">投稿エラー</span>
+              </div>
+              <div class="error-alert-message">
+                API認証エラーが発生しました。Xアカウントを再連携してください。
+              </div>
+            </div>
+            <div class="post-actions">
+              <button class="btn-icon retry">
+                <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i>
+                再試行する
+              </button>
+              <button class="btn-icon edit">
+                <i data-lucide="pencil" style="width: 16px; height: 16px;"></i>
+                編集する
+              </button>
+              <button class="btn-icon delete">
+                <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                削除
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tomorrow's Posts -->
+        <div class="date-group">
+          <div class="date-header">
+            <h2>
+              <i data-lucide="calendar" style="width: 20px; height: 20px;"></i>
+              明日（11月22日）
+            </h2>
+            <span class="post-count">4件</span>
+          </div>
+
+          <div class="post-card scheduled">
+            <div class="post-header">
+              <div class="post-status">
+                <span class="status-badge scheduled">
+                  <i data-lucide="clock" style="width: 16px; height: 16px;"></i>
+                  予約中
+                </span>
+                <span class="status-description">自動で投稿されます</span>
+                <span class="scheduled-time">
+                  <i data-lucide="calendar-clock" style="width: 14px; height: 14px;"></i>
+                  9:00 に投稿予定
+                </span>
+              </div>
+            </div>
+            <div class="post-content">リファクタリングは「動くコード」を「良いコード」に変える作業です🔧
+
+機能追加の前に、まず既存コードを整理する習慣をつけると、長期的な開発速度が上がります。
+
+技術的負債は複利で増えていくことを忘れずに。
+
+<span class="hashtag">#リファクタリング</span></div>
+            <div class="character-count-wrapper">
+              <span class="character-count">132/280</span>
+              <span class="character-limit">残り 148文字</span>
+            </div>
+            <div class="post-actions">
+              <button class="btn-icon edit">
+                <i data-lucide="pencil" style="width: 16px; height: 16px;"></i>
+                編集する
+              </button>
+              <button class="btn-icon regenerate">
+                <i data-lucide="refresh-cw" style="width: 16px; height: 16px;"></i>
+                AIで再生成
+              </button>
+              <button class="btn-icon delete">
+                <i data-lucide="trash-2" style="width: 16px; height: 16px;"></i>
+                削除
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Preview Panel (Sticky Right Side) -->
+      <div class="preview-panel">
+        <div class="preview-card">
+          <div class="preview-header">
+            <i data-lucide="eye" style="width: 24px; height: 24px; color: #1DA1F2;"></i>
+            <h3>ツイートプレビュー</h3>
+          </div>
+
+          <div class="tweet-preview">
+            <div class="tweet-header">
+              <div class="avatar">Y</div>
+              <div class="tweet-user-info">
+                <div class="tweet-username">あなたの名前</div>
+                <div class="tweet-handle">@your_username</div>
+              </div>
+            </div>
+
+            <div class="tweet-content">プログラミング初心者が最初に学ぶべきは「デバッグ力」です💡
+
+エラーメッセージを読む習慣をつけるだけで、成長速度が3倍変わります。
+
+最初は怖いかもしれませんが、エラーは敵ではなく「先生」です✨
+
+<span class="hashtag">#プログラミング初心者</span> <span class="hashtag">#エンジニア</span></div>
+
+            <div class="tweet-timestamp">2025年11月21日 9:00 AM</div>
+
+            <div class="tweet-actions">
+              <div class="tweet-action-btn">
+                <i data-lucide="message-circle" style="width: 18px; height: 18px;"></i>
+                <span>0</span>
+              </div>
+              <div class="tweet-action-btn">
+                <i data-lucide="repeat-2" style="width: 18px; height: 18px;"></i>
+                <span>0</span>
+              </div>
+              <div class="tweet-action-btn">
+                <i data-lucide="heart" style="width: 18px; height: 18px;"></i>
+                <span>0</span>
+              </div>
+              <div class="tweet-action-btn">
+                <i data-lucide="share" style="width: 18px; height: 18px;"></i>
+              </div>
+            </div>
+          </div>
+
+          <div class="hint-box">
+            <div class="hint-box-header">
+              <i data-lucide="lightbulb" style="width: 16px; height: 16px; color: #1E40AF;"></i>
+              <span class="hint-box-title">使い方のヒント</span>
+            </div>
+            <div class="hint-box-text">
+              投稿カードをクリックすると、このプレビューに表示されます。実際のXでの見た目を確認できます。
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Initialize Lucide Icons -->
+  <script>
+    lucide.createIcons();
+  </script>
+</body>
+</html>
