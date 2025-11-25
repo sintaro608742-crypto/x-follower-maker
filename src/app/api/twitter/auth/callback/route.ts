@@ -26,6 +26,9 @@ import { TwitterApi } from 'twitter-api-v2';
  * Twitter OAuthコールバックを処理
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
+  // 環境変数を最初にtrim（改行文字対策）
+  const baseUrl = process.env.NEXTAUTH_URL?.trim() || '';
+
   try {
     // URLからクエリパラメータを取得
     const { searchParams } = new URL(request.url);
@@ -37,7 +40,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     if (error) {
       console.error('Twitter OAuth error:', error);
       return NextResponse.redirect(
-        new URL('/dashboard?error=twitter_auth_cancelled', process.env.NEXTAUTH_URL!)
+        new URL('/dashboard?error=twitter_auth_cancelled', baseUrl)
       );
     }
 
@@ -45,7 +48,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     if (!code || !state) {
       console.error('Missing code or state');
       return NextResponse.redirect(
-        new URL('/dashboard?error=missing_params', process.env.NEXTAUTH_URL!)
+        new URL('/dashboard?error=missing_params', baseUrl)
       );
     }
 
@@ -53,7 +56,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const session = await getServerSession(authOptions);
     if (!session || !session.user) {
       return NextResponse.redirect(
-        new URL('/login?error=session_expired', process.env.NEXTAUTH_URL!)
+        new URL('/login?error=session_expired', baseUrl)
       );
     }
 
@@ -62,7 +65,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     if (!oauthStateCookie) {
       console.error('OAuth state cookie not found');
       return NextResponse.redirect(
-        new URL('/dashboard?error=state_not_found', process.env.NEXTAUTH_URL!)
+        new URL('/dashboard?error=state_not_found', baseUrl)
       );
     }
 
@@ -72,7 +75,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     } catch {
       console.error('Invalid OAuth state cookie');
       return NextResponse.redirect(
-        new URL('/dashboard?error=invalid_state', process.env.NEXTAUTH_URL!)
+        new URL('/dashboard?error=invalid_state', baseUrl)
       );
     }
 
@@ -80,7 +83,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     if (state !== savedState.state) {
       console.error('State mismatch');
       return NextResponse.redirect(
-        new URL('/dashboard?error=state_mismatch', process.env.NEXTAUTH_URL!)
+        new URL('/dashboard?error=state_mismatch', baseUrl)
       );
     }
 
@@ -88,19 +91,19 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     if (Date.now() - savedState.createdAt > 10 * 60 * 1000) {
       console.error('OAuth state expired');
       return NextResponse.redirect(
-        new URL('/dashboard?error=state_expired', process.env.NEXTAUTH_URL!)
+        new URL('/dashboard?error=state_expired', baseUrl)
       );
     }
 
-    // 環境変数の検証
-    const clientId = process.env.TWITTER_CLIENT_ID;
-    const clientSecret = process.env.TWITTER_CLIENT_SECRET;
-    const redirectUri = `${process.env.NEXTAUTH_URL}/api/twitter/auth/callback`;
+    // 環境変数の検証（改行文字対策）
+    const clientId = process.env.TWITTER_CLIENT_ID?.trim();
+    const clientSecret = process.env.TWITTER_CLIENT_SECRET?.trim();
+    const redirectUri = `${baseUrl}/api/twitter/auth/callback`;
 
     if (!clientId || !clientSecret) {
       console.error('Missing Twitter credentials');
       return NextResponse.redirect(
-        new URL('/dashboard?error=config_error', process.env.NEXTAUTH_URL!)
+        new URL('/dashboard?error=config_error', baseUrl)
       );
     }
 
@@ -153,7 +156,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
     // OAuth state cookieを削除
     const response = NextResponse.redirect(
-      new URL('/dashboard?success=twitter_connected', process.env.NEXTAUTH_URL!)
+      new URL('/dashboard?success=twitter_connected', baseUrl)
     );
     response.cookies.delete('twitter_oauth_state');
 
@@ -174,7 +177,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     }
 
     return NextResponse.redirect(
-      new URL(`/dashboard?error=${errorMessage}`, process.env.NEXTAUTH_URL!)
+      new URL(`/dashboard?error=${errorMessage}`, baseUrl)
     );
   }
 }

@@ -36,9 +36,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
       );
     }
 
-    // 環境変数の検証
-    const clientId = process.env.TWITTER_CLIENT_ID;
-    const redirectUri = `${process.env.NEXTAUTH_URL}/api/twitter/auth/callback`;
+    // 環境変数の検証（改行文字を除去）
+    const clientId = process.env.TWITTER_CLIENT_ID?.trim();
+    const baseUrl = process.env.NEXTAUTH_URL?.trim();
+    const redirectUri = `${baseUrl}/api/twitter/auth/callback`;
 
     if (!clientId) {
       return NextResponse.json(
