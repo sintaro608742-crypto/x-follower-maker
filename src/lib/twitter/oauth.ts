@@ -74,7 +74,6 @@ export function generateAuthUrl(params: {
       'tweet.read',
       'tweet.write',
       'users.read',
-      'follows.read',
       'offline.access', // リフレッシュトークン取得用
     ].join(' '),
     state,
