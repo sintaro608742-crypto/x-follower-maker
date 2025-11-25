@@ -56,8 +56,8 @@ async function sleep(ms: number): Promise<void> {
 export async function generatePosts(options: GeneratePostOptions): Promise<string[]> {
   const { keywords, count = 1 } = options;
 
-  // APIキーの確認
-  const apiKey = process.env.GEMINI_API_KEY;
+  // APIキーの確認（改行文字を除去）
+  const apiKey = process.env.GEMINI_API_KEY?.trim();
   if (!apiKey) {
     throw new ExternalServiceError('Gemini API', new Error('GEMINI_API_KEY is not configured'));
   }
