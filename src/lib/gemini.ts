@@ -3,7 +3,7 @@
  *
  * このファイルはGoogle Gemini APIを使用してAI投稿を生成する機能を提供します。
  *
- * 使用モデル: gemini-1.5-flash（安定版）
+ * 使用モデル: gemini-2.0-flash-exp
  * レート制限: 15 RPM（無料枠）
  * 無料枠: 1,500リクエスト/日
  */
@@ -107,9 +107,9 @@ JSON形式で返却:
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       // Gemini API呼び出し
-      // Using v1 API with gemini-1.5-flash model (stable)
+      // Using v1beta API with gemini-2.0-flash-exp model
       const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`,
         {
           method: 'POST',
           headers: {
