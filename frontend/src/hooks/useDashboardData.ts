@@ -53,19 +53,21 @@ export const useDashboardData = () => {
     fetchData();
   }, []);
 
-  const updateKeywords = async (keywords: string[]): Promise<SettingsUpdateResponse> => {
-    // 楽観的更新: APIコール前にローカル状態とrefを即座に更新
-    // これにより連続クリック時のレースコンディションを防ぐ
+  const updateKeywords = useCallback(async (keywords: string[]): Promise<SettingsUpdateResponse> => {
+    // 楽観的更新: refを即座に更新（クロージャ問題を回避）
     latestKeywordsRef.current = keywords;
-    if (data) {
-      setData({
-        ...data,
+
+    // setDataは関数型更新を使用してクロージャ問題を回避
+    setData(prevData => {
+      if (!prevData) return prevData;
+      return {
+        ...prevData,
         user: {
-          ...data.user,
+          ...prevData.user,
           keywords
         }
-      });
-    }
+      };
+    });
 
     try {
       setUpdating(true);
@@ -96,7 +98,7 @@ export const useDashboardData = () => {
     } finally {
       setUpdating(false);
     }
-  };
+  }, []);
 
   const updatePostSchedule = async (
     frequency: number,
@@ -235,7 +237,7 @@ export const useDashboardData = () => {
     }
 
     return updateKeywords(newKeywords);
-  }, []);
+  }, [updateKeywords]);
 
   return {
     data,
