@@ -247,10 +247,12 @@ export interface CreatePostOptions {
   userId: string;
   content: string;
   scheduled_at: Date;
+  isAiGenerated?: boolean;  // AI生成投稿かどうか（デフォルト: false = 手動投稿）
+  isApproved?: boolean;     // 承認済みかどうか（デフォルト: true = 承認済み）
 }
 
 /**
- * 新規投稿を作成（手動投稿）
+ * 新規投稿を作成
  *
  * @param options - 投稿データ
  * @returns 作成された投稿データ
@@ -258,7 +260,12 @@ export interface CreatePostOptions {
  */
 export async function createPost(options: CreatePostOptions): Promise<Post> {
   try {
-    const { userId, content, scheduled_at } = options;
+    const { userId, content, scheduled_at, isAiGenerated = false, isApproved = true } = options;
+
+    // AI生成投稿は未承認状態で作成、手動投稿は承認済みで作成
+    const is_manual = !isAiGenerated;
+    const is_approved = isApproved;
+    const status = is_approved ? 'scheduled' : 'unapproved';
 
     const result = await db
       .insert(posts)
@@ -266,9 +273,9 @@ export async function createPost(options: CreatePostOptions): Promise<Post> {
         user_id: userId,
         content,
         scheduled_at,
-        is_approved: true,
-        is_manual: true,
-        status: 'scheduled',
+        is_approved,
+        is_manual,
+        status,
       })
       .returning({
         id: posts.id,

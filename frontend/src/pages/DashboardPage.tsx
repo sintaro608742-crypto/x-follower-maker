@@ -1,8 +1,8 @@
 import { useState } from 'react';
-import { Box, Typography, CircularProgress, Alert, Grid, Snackbar } from '@mui/material';
+import { Box, Typography, CircularProgress, Alert, Grid, Snackbar, Button, Paper, Slider, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
 import { MainLayout } from '@/layouts/MainLayout';
 import { motion } from 'framer-motion';
-import { Clock, List } from 'lucide-react';
+import { Clock, List, Sparkles } from 'lucide-react';
 import { useDashboardData } from '@/hooks/useDashboardData';
 import {
   TwitterConnectionStatus,
@@ -23,12 +23,16 @@ export const DashboardPage = () => {
     updateKeywords,
     updatePostSchedule,
     connectTwitter,
-    disconnectTwitter
+    disconnectTwitter,
+    generatePosts
   } = useDashboardData();
 
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState('');
   const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+  const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
+  const [generateCount, setGenerateCount] = useState(3);
+  const [generating, setGenerating] = useState(false);
 
   const showSnackbar = (message: string, severity: 'success' | 'error' = 'success') => {
     setSnackbarMessage(message);
@@ -137,6 +141,35 @@ export const DashboardPage = () => {
     }
   };
 
+  const handleOpenGenerateDialog = () => {
+    setGenerateDialogOpen(true);
+  };
+
+  const handleCloseGenerateDialog = () => {
+    setGenerateDialogOpen(false);
+  };
+
+  const handleGeneratePosts = async () => {
+    try {
+      setGenerating(true);
+      logger.debug('Generating posts with AI', { count: generateCount, component: 'DashboardPage' });
+
+      const response = await generatePosts(generateCount);
+
+      showSnackbar(response.message, 'success');
+      setGenerateDialogOpen(false);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Post generation failed', {
+        error: error.message,
+        component: 'DashboardPage'
+      });
+      showSnackbar(error.message || 'AI投稿生成に失敗しました', 'error');
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   if (loading) {
     return (
       <MainLayout>
@@ -218,6 +251,62 @@ export const DashboardPage = () => {
               selectedKeywords={data.user.keywords}
               onKeywordToggle={handleKeywordToggle}
             />
+
+            {/* AI Generate Posts Button */}
+            <Paper
+              sx={{
+                mt: 2,
+                p: 3,
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                borderRadius: 3,
+                boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <Box>
+                  <Typography
+                    variant="h6"
+                    sx={{ color: '#FFFFFF', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}
+                  >
+                    <Sparkles size={24} />
+                    AI投稿を生成
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)', mt: 0.5 }}>
+                    選択したキーワードに基づいてAIが魅力的なツイートを自動生成
+                  </Typography>
+                </Box>
+                <Button
+                  variant="contained"
+                  onClick={handleOpenGenerateDialog}
+                  disabled={!data.user.keywords || data.user.keywords.length === 0 || generating}
+                  sx={{
+                    background: '#FFFFFF',
+                    color: '#667eea',
+                    fontWeight: 700,
+                    px: 3,
+                    py: 1.5,
+                    borderRadius: 2,
+                    boxShadow: '0 4px 16px rgba(0,0,0,0.1)',
+                    '&:hover': {
+                      background: '#F8F9FA',
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 6px 20px rgba(0,0,0,0.15)',
+                    },
+                    '&:disabled': {
+                      background: 'rgba(255,255,255,0.5)',
+                      color: 'rgba(102, 126, 234, 0.5)',
+                    },
+                  }}
+                >
+                  {generating ? <CircularProgress size={20} sx={{ color: '#667eea' }} /> : '生成する'}
+                </Button>
+              </Box>
+              {(!data.user.keywords || data.user.keywords.length === 0) && (
+                <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)', display: 'block', mt: 1 }}>
+                  ※ キーワードを1つ以上選択してください
+                </Typography>
+              )}
+            </Paper>
           </Grid>
 
           {/* Post Schedule Settings */}
@@ -278,6 +367,87 @@ export const DashboardPage = () => {
             <CircularProgress />
           </Box>
         )}
+
+        {/* AI Generate Dialog */}
+        <Dialog
+          open={generateDialogOpen}
+          onClose={handleCloseGenerateDialog}
+          maxWidth="sm"
+          fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: 3,
+              p: 1,
+            }
+          }}
+        >
+          <DialogTitle sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Sparkles size={24} color="#667eea" />
+            AI投稿を生成
+          </DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              選択したキーワードに基づいて、AIが魅力的なツイートを自動生成します。
+              生成された投稿は「承認待ち」状態で作成されます。
+            </Typography>
+            <Box sx={{ px: 2 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                生成件数: {generateCount}件
+              </Typography>
+              <Slider
+                value={generateCount}
+                onChange={(_, value) => setGenerateCount(value as number)}
+                min={1}
+                max={5}
+                step={1}
+                marks={[
+                  { value: 1, label: '1件' },
+                  { value: 3, label: '3件' },
+                  { value: 5, label: '5件' },
+                ]}
+                sx={{
+                  color: '#667eea',
+                  '& .MuiSlider-thumb': {
+                    backgroundColor: '#667eea',
+                  },
+                  '& .MuiSlider-track': {
+                    backgroundColor: '#667eea',
+                  },
+                }}
+              />
+            </Box>
+            <Alert severity="info" sx={{ mt: 2 }}>
+              生成には数秒かかる場合があります。生成された投稿は「投稿管理」ページで確認・編集できます。
+            </Alert>
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={handleCloseGenerateDialog} color="inherit">
+              キャンセル
+            </Button>
+            <Button
+              onClick={handleGeneratePosts}
+              variant="contained"
+              disabled={generating}
+              sx={{
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                fontWeight: 600,
+                px: 3,
+                '&:hover': {
+                  background: 'linear-gradient(135deg, #5a6fd6 0%, #6a4190 100%)',
+                },
+              }}
+            >
+              {generating ? (
+                <>
+                  <CircularProgress size={20} sx={{ color: '#fff', mr: 1 }} />
+                  生成中...
+                </>
+              ) : (
+                `${generateCount}件生成する`
+              )}
+            </Button>
+          </DialogActions>
+        </Dialog>
 
         {/* Snackbar for notifications */}
         <Snackbar

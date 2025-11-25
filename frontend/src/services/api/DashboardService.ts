@@ -3,9 +3,18 @@ import type {
   KeywordUpdateRequest,
   PostScheduleUpdateRequest,
   SettingsUpdateResponse,
-  TwitterDisconnectRequest
+  TwitterDisconnectRequest,
+  Post
 } from '@/types';
 import { logger } from '@/lib/logger';
+
+/**
+ * AI投稿生成レスポンス型
+ */
+export interface GeneratePostsResponse {
+  posts: Post[];
+  message: string;
+}
 
 export class DashboardService {
   // 開発環境: http://localhost:8432, 本番環境: 空文字列（同じドメイン）
@@ -206,6 +215,52 @@ export class DashboardService {
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
       logger.error('Failed to disconnect Twitter', { error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * AIで投稿を生成
+   * POST /api/posts/generate
+   */
+  async generatePosts(count: number = 1): Promise<GeneratePostsResponse> {
+    logger.debug('Generating posts with AI', { count });
+
+    try {
+      const response = await fetch(`${this.baseUrl}/api/posts/generate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ count }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('認証が必要です。ログインしてください。');
+        }
+        if (response.status === 409) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'キーワードが設定されていません。');
+        }
+        if (response.status === 429) {
+          throw new Error('API制限に達しました。しばらく待ってから再度お試しください。');
+        }
+        throw new Error(`投稿の生成に失敗しました（${response.status}）`);
+      }
+
+      const data: GeneratePostsResponse = await response.json();
+
+      logger.info('Posts generated successfully', {
+        count: data.posts.length,
+        message: data.message
+      });
+
+      return data;
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Failed to generate posts', { error: error.message });
       throw error;
     }
   }

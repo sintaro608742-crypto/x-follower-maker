@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { DashboardService } from '@/services/api/DashboardService';
+import type { GeneratePostsResponse } from '@/services/api/DashboardService';
 import type {
   DashboardData,
   KeywordUpdateRequest,
@@ -166,6 +167,34 @@ export const useDashboardData = () => {
     }
   };
 
+  const generatePosts = async (count: number = 1): Promise<GeneratePostsResponse> => {
+    try {
+      setUpdating(true);
+      logger.debug('Generating posts with AI', { count, hookName: 'useDashboardData' });
+
+      const response = await service.generatePosts(count);
+
+      // データを再取得して投稿リストを更新
+      await fetchData();
+
+      logger.info('Posts generated successfully', {
+        hookName: 'useDashboardData',
+        count: response.posts.length
+      });
+
+      return response;
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Failed to generate posts', {
+        error: error.message,
+        hookName: 'useDashboardData'
+      });
+      throw error;
+    } finally {
+      setUpdating(false);
+    }
+  };
+
   return {
     data,
     loading,
@@ -175,6 +204,7 @@ export const useDashboardData = () => {
     updateKeywords,
     updatePostSchedule,
     connectTwitter,
-    disconnectTwitter
+    disconnectTwitter,
+    generatePosts
   };
 };
