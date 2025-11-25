@@ -7,6 +7,13 @@ export async function login(
 ) {
   await page.goto('/login');
 
+  // React SPAの完全ロードを待機
+  await page.waitForLoadState('domcontentloaded');
+  await page.waitForLoadState('networkidle');
+
+  // MUI TextFieldが表示されるまで明示的に待機
+  await page.waitForSelector('input[name="email"]', { state: 'visible', timeout: 10000 });
+
   // MUI TextFieldはlabelで識別する
   await page.getByLabel(/メールアドレス|email/i).fill(email);
   await page.getByLabel(/パスワード|password/i).fill(password);

@@ -54,11 +54,15 @@ export const useDashboardData = () => {
   }, []);
 
   const updateKeywords = useCallback(async (keywords: string[]): Promise<SettingsUpdateResponse> => {
+    console.log('[updateKeywords] Called with keywords:', keywords);
+
     // 楽観的更新: refを即座に更新（クロージャ問題を回避）
     latestKeywordsRef.current = keywords;
+    console.log('[updateKeywords] Updated ref to:', latestKeywordsRef.current);
 
     // setDataは関数型更新を使用してクロージャ問題を回避
     setData(prevData => {
+      console.log('[updateKeywords] setData prevData.user.keywords:', prevData?.user.keywords);
       if (!prevData) return prevData;
       return {
         ...prevData,
@@ -72,9 +76,12 @@ export const useDashboardData = () => {
     try {
       setUpdating(true);
       logger.debug('Updating keywords', { keywords, hookName: 'useDashboardData' });
+      console.log('[updateKeywords] Making API call with:', keywords);
 
       const request: KeywordUpdateRequest = { keywords };
       const response = await service.updateKeywords(request);
+
+      console.log('[updateKeywords] API success, response:', response);
 
       // 成功時は楽観的更新が既に完了しているため、fetchDataは不要
       // 連続クリック時のレースコンディションを防ぐ
@@ -86,6 +93,7 @@ export const useDashboardData = () => {
 
       return response;
     } catch (err) {
+      console.log('[updateKeywords] API error:', err);
       // エラー時は元の状態に戻すためデータを再取得
       await fetchData();
 
@@ -224,16 +232,22 @@ export const useDashboardData = () => {
     const currentKeywords = latestKeywordsRef.current;
     let newKeywords: string[];
 
+    console.log('[toggleKeyword] Current keywords from ref:', currentKeywords);
+    console.log('[toggleKeyword] Toggling keyword:', keyword);
+
     if (currentKeywords.includes(keyword)) {
       // 選択解除
       newKeywords = currentKeywords.filter(k => k !== keyword);
+      console.log('[toggleKeyword] Removing keyword, newKeywords:', newKeywords);
     } else {
       // 新規選択（最大数チェック）
       if (currentKeywords.length >= maxSelection) {
         logger.warn('Maximum keywords reached', { current: currentKeywords.length, max: maxSelection });
+        console.log('[toggleKeyword] Max reached!', currentKeywords.length, '>=', maxSelection);
         return null; // 最大数に達している場合はnullを返す
       }
       newKeywords = [...currentKeywords, keyword];
+      console.log('[toggleKeyword] Adding keyword, newKeywords:', newKeywords);
     }
 
     return updateKeywords(newKeywords);
