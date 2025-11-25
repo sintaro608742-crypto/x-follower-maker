@@ -27,8 +27,11 @@ import { Post } from '@/types';
  */
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
+    console.log('[API /api/posts/generate] Starting post generation...');
+
     // セッション認証
     const userId = await getCurrentUserId();
+    console.log('[API /api/posts/generate] User authenticated:', userId);
 
     // リクエストボディ取得
     let body: { count?: number } = {};
@@ -43,9 +46,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (count < 1 || count > 5) {
       throw new ValidationError('count must be between 1 and 5');
     }
+    console.log('[API /api/posts/generate] Generating', count, 'posts');
 
     // ユーザー情報を取得（キーワード取得のため）
     const user = await getUserById(userId);
+    console.log('[API /api/posts/generate] User keywords:', user.keywords);
 
     // キーワードが設定されているかチェック
     if (!user.keywords || user.keywords.length === 0) {
@@ -55,10 +60,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     }
 
     // Gemini APIで投稿を生成
+    console.log('[API /api/posts/generate] Calling Gemini API...');
     const generatedTweets = await generatePosts({
       keywords: user.keywords,
       count,
     });
+    console.log('[API /api/posts/generate] Gemini API returned', generatedTweets.length, 'tweets');
 
     // 生成された投稿をDBに保存
     const savedPosts: Post[] = [];
