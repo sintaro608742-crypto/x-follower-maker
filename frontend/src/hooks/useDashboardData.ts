@@ -76,8 +76,8 @@ export const useDashboardData = () => {
       const request: KeywordUpdateRequest = { keywords };
       const response = await service.updateKeywords(request);
 
-      // 成功時はサーバーからの最新データで上書き
-      await fetchData();
+      // 成功時は楽観的更新が既に完了しているため、fetchDataは不要
+      // 連続クリック時のレースコンディションを防ぐ
 
       logger.info('Keywords updated successfully', {
         hookName: 'useDashboardData',
