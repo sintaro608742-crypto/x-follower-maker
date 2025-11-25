@@ -13,6 +13,7 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  Snackbar,
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -630,11 +631,62 @@ export const PostsPage: React.FC = () => {
     regeneratePost,
     approvePost,
     retryPost,
+    createManualPost,
   } = usePostsData();
 
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editContent, setEditContent] = useState('');
   const [editPostId, setEditPostId] = useState<string | null>(null);
+
+  // 手動投稿追加用
+  const [createDialogOpen, setCreateDialogOpen] = useState(false);
+  const [newPostContent, setNewPostContent] = useState('');
+  const [newPostScheduledAt, setNewPostScheduledAt] = useState('');
+  const [creating, setCreating] = useState(false);
+
+  // Snackbar
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarSeverity, setSnackbarSeverity] = useState<'success' | 'error'>('success');
+
+  const showSnackbar = (message: string, severity: 'success' | 'error' = 'success') => {
+    setSnackbarMessage(message);
+    setSnackbarSeverity(severity);
+    setSnackbarOpen(true);
+  };
+
+  const handleOpenCreateDialog = () => {
+    // デフォルトで1時間後を設定
+    const defaultTime = new Date();
+    defaultTime.setHours(defaultTime.getHours() + 1);
+    defaultTime.setMinutes(0);
+    const formatted = defaultTime.toISOString().slice(0, 16);
+    setNewPostScheduledAt(formatted);
+    setNewPostContent('');
+    setCreateDialogOpen(true);
+  };
+
+  const handleCreatePost = async () => {
+    if (!newPostContent.trim() || !newPostScheduledAt) {
+      showSnackbar('投稿内容と予約時間を入力してください', 'error');
+      return;
+    }
+    if (newPostContent.length > 280) {
+      showSnackbar('投稿は280文字以内にしてください', 'error');
+      return;
+    }
+    try {
+      setCreating(true);
+      await createManualPost(newPostContent, newPostScheduledAt);
+      showSnackbar('投稿を作成しました', 'success');
+      setCreateDialogOpen(false);
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      showSnackbar(error.message || '投稿の作成に失敗しました', 'error');
+    } finally {
+      setCreating(false);
+    }
+  };
 
   const handleEdit = (post: Post) => {
     setEditPostId(post.id);
@@ -741,6 +793,7 @@ export const PostsPage: React.FC = () => {
           <Button
             variant="contained"
             startIcon={<Plus size={20} />}
+            onClick={handleOpenCreateDialog}
             sx={{
               background: 'linear-gradient(135deg, #1DA1F2 0%, #0E7FC7 100%)',
               fontWeight: 600,
@@ -819,6 +872,70 @@ export const PostsPage: React.FC = () => {
             </Button>
           </DialogActions>
         </Dialog>
+
+        {/* Create Manual Post Dialog */}
+        <Dialog open={createDialogOpen} onClose={() => setCreateDialogOpen(false)} maxWidth="sm" fullWidth>
+          <DialogTitle sx={{ fontWeight: 700 }}>手動で投稿を追加</DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              手動で投稿を作成し、指定した日時に予約投稿します。
+            </Typography>
+            <TextField
+              autoFocus
+              margin="dense"
+              label="投稿内容"
+              fullWidth
+              multiline
+              rows={6}
+              value={newPostContent}
+              onChange={(e) => setNewPostContent(e.target.value)}
+              helperText={`${newPostContent.length}/280文字`}
+              error={newPostContent.length > 280}
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              margin="dense"
+              label="予約日時"
+              type="datetime-local"
+              fullWidth
+              value={newPostScheduledAt}
+              onChange={(e) => setNewPostScheduledAt(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+            />
+          </DialogContent>
+          <DialogActions sx={{ p: 2 }}>
+            <Button onClick={() => setCreateDialogOpen(false)} disabled={creating}>
+              キャンセル
+            </Button>
+            <Button
+              onClick={handleCreatePost}
+              variant="contained"
+              disabled={creating || newPostContent.length > 280 || !newPostContent.trim()}
+              sx={{
+                background: 'linear-gradient(135deg, #1DA1F2 0%, #0E7FC7 100%)',
+                fontWeight: 600,
+              }}
+            >
+              {creating ? <CircularProgress size={20} sx={{ color: '#fff' }} /> : '投稿を作成'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Snackbar for notifications */}
+        <Snackbar
+          open={snackbarOpen}
+          autoHideDuration={3000}
+          onClose={() => setSnackbarOpen(false)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert
+            onClose={() => setSnackbarOpen(false)}
+            severity={snackbarSeverity}
+            sx={{ width: '100%' }}
+          >
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
       </motion.div>
     </MainLayout>
   );
