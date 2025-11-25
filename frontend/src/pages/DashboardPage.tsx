@@ -20,7 +20,7 @@ export const DashboardPage = () => {
     loading,
     error,
     updating,
-    updateKeywords,
+    toggleKeyword,
     updatePostSchedule,
     connectTwitter,
     disconnectTwitter,
@@ -78,24 +78,18 @@ export const DashboardPage = () => {
   };
 
   const handleKeywordToggle = async (keyword: string) => {
-    if (!data?.user.keywords) return;
+    try {
+      logger.debug('Toggling keyword', { keyword, component: 'DashboardPage' });
 
-    const currentKeywords = data.user.keywords;
-    let newKeywords: string[];
+      // toggleKeywordはrefを使って最新の状態を取得するため、レースコンディションを防ぐ
+      const response = await toggleKeyword(keyword, 3);
 
-    if (currentKeywords.includes(keyword)) {
-      newKeywords = currentKeywords.filter(k => k !== keyword);
-    } else {
-      if (currentKeywords.length >= 3) {
+      if (response === null) {
+        // 最大数に達している場合
         showSnackbar('キーワードは最大3つまで選択できます', 'error');
         return;
       }
-      newKeywords = [...currentKeywords, keyword];
-    }
 
-    try {
-      logger.debug('Updating keywords', { keywords: newKeywords, component: 'DashboardPage' });
-      const response = await updateKeywords(newKeywords);
       showSnackbar(response.message, 'success');
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));

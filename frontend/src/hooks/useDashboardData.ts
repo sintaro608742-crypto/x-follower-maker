@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { DashboardService } from '@/services/api/DashboardService';
 import type { GeneratePostsResponse } from '@/services/api/DashboardService';
 import type {
@@ -18,6 +18,9 @@ export const useDashboardData = () => {
   const [error, setError] = useState<Error | null>(null);
   const [updating, setUpdating] = useState(false);
 
+  // 連続クリック時のレースコンディション防止用ref
+  const latestKeywordsRef = useRef<string[]>([]);
+
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -26,6 +29,8 @@ export const useDashboardData = () => {
 
       const result = await service.getDashboardData();
       setData(result);
+      // refも同期
+      latestKeywordsRef.current = result.user.keywords || [];
 
       logger.info('Dashboard data fetched successfully', {
         hookName: 'useDashboardData',
@@ -49,6 +54,19 @@ export const useDashboardData = () => {
   }, []);
 
   const updateKeywords = async (keywords: string[]): Promise<SettingsUpdateResponse> => {
+    // 楽観的更新: APIコール前にローカル状態とrefを即座に更新
+    // これにより連続クリック時のレースコンディションを防ぐ
+    latestKeywordsRef.current = keywords;
+    if (data) {
+      setData({
+        ...data,
+        user: {
+          ...data.user,
+          keywords
+        }
+      });
+    }
+
     try {
       setUpdating(true);
       logger.debug('Updating keywords', { keywords, hookName: 'useDashboardData' });
@@ -56,7 +74,7 @@ export const useDashboardData = () => {
       const request: KeywordUpdateRequest = { keywords };
       const response = await service.updateKeywords(request);
 
-      // データを再取得
+      // 成功時はサーバーからの最新データで上書き
       await fetchData();
 
       logger.info('Keywords updated successfully', {
@@ -66,6 +84,9 @@ export const useDashboardData = () => {
 
       return response;
     } catch (err) {
+      // エラー時は元の状態に戻すためデータを再取得
+      await fetchData();
+
       const error = err instanceof Error ? err : new Error(String(err));
       logger.error('Failed to update keywords', {
         error: error.message,
@@ -195,6 +216,27 @@ export const useDashboardData = () => {
     }
   };
 
+  // キーワードトグル用関数（レースコンディション防止）
+  const toggleKeyword = useCallback(async (keyword: string, maxSelection: number = 3): Promise<SettingsUpdateResponse | null> => {
+    // 常にrefから最新のキーワードを取得（レースコンディション防止）
+    const currentKeywords = latestKeywordsRef.current;
+    let newKeywords: string[];
+
+    if (currentKeywords.includes(keyword)) {
+      // 選択解除
+      newKeywords = currentKeywords.filter(k => k !== keyword);
+    } else {
+      // 新規選択（最大数チェック）
+      if (currentKeywords.length >= maxSelection) {
+        logger.warn('Maximum keywords reached', { current: currentKeywords.length, max: maxSelection });
+        return null; // 最大数に達している場合はnullを返す
+      }
+      newKeywords = [...currentKeywords, keyword];
+    }
+
+    return updateKeywords(newKeywords);
+  }, []);
+
   return {
     data,
     loading,
@@ -202,6 +244,7 @@ export const useDashboardData = () => {
     updating,
     refetch: fetchData,
     updateKeywords,
+    toggleKeyword, // 新しいトグル関数
     updatePostSchedule,
     connectTwitter,
     disconnectTwitter,
