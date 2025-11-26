@@ -212,14 +212,22 @@ JSON形式で返却:
         throw lastError;
       }
 
-      // JSONパース
+      // JSONパース（マークダウンコードブロックを除去）
+      let jsonText = generatedText.trim();
+      // ```json ... ``` や ``` ... ``` を除去
+      if (jsonText.startsWith('```')) {
+        jsonText = jsonText.replace(/^```(?:json)?\s*\n?/, '').replace(/\n?```\s*$/, '');
+      }
+      console.log('[Gemini API] Parsing JSON response:', jsonText.substring(0, 200));
+
       let parsedResponse: GeneratePostResponse;
       try {
-        parsedResponse = JSON.parse(generatedText) as GeneratePostResponse;
+        parsedResponse = JSON.parse(jsonText) as GeneratePostResponse;
       } catch (parseError) {
+        console.error('[Gemini API] JSON parse failed. Raw text:', generatedText.substring(0, 500));
         lastError = new ExternalServiceError(
           'Gemini API',
-          new Error('Failed to parse JSON response from Gemini API')
+          new Error(`Failed to parse JSON response: ${(parseError as Error).message}`)
         );
 
         // 最後の試行でない場合はリトライ
