@@ -74,7 +74,14 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     // 生成された投稿をDBに保存
     const savedPosts: Post[] = [];
-    const now = new Date();
+
+    // 日本時間（JST = UTC+9）で現在時刻を取得
+    const JST_OFFSET = 9 * 60 * 60 * 1000; // 9時間をミリ秒で
+    const nowUTC = new Date();
+    const nowJST = new Date(nowUTC.getTime() + JST_OFFSET);
+
+    console.log('[API /api/posts/generate] Current time UTC:', nowUTC.toISOString());
+    console.log('[API /api/posts/generate] Current time JST:', nowJST.toISOString());
 
     // ユーザーの投稿時間帯設定を取得（設定がない場合はデフォルト値）
     const postTimes = user.post_times && user.post_times.length > 0
@@ -83,22 +90,28 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     console.log('[API /api/posts/generate] User post_times:', postTimes);
 
-    // 次の投稿可能時刻を計算する関数
+    // 次の投稿可能時刻を計算する関数（日本時間ベース）
     const getNextScheduledTime = (index: number): Date => {
-      const nowHours = now.getHours();
-      const nowMinutes = now.getMinutes();
-      const nowTimeStr = `${String(nowHours).padStart(2, '0')}:${String(nowMinutes).padStart(2, '0')}`;
+      // 日本時間での現在時刻
+      const nowHoursJST = nowJST.getUTCHours();
+      const nowMinutesJST = nowJST.getUTCMinutes();
+      const nowTimeStr = `${String(nowHoursJST).padStart(2, '0')}:${String(nowMinutesJST).padStart(2, '0')}`;
+
+      console.log('[API /api/posts/generate] Current JST time string:', nowTimeStr);
 
       // 今日の残りの時間帯と明日以降の時間帯を含めた配列を作成
       const availableTimes: { date: Date; time: string }[] = [];
 
-      // 今日の時間帯
+      // 今日の時間帯（日本時間）
       for (const time of postTimes) {
         if (time > nowTimeStr) {
           const [hours, minutes] = time.split(':').map(Number);
-          const scheduledDate = new Date(now);
-          scheduledDate.setHours(hours, minutes, 0, 0);
-          availableTimes.push({ date: scheduledDate, time });
+          // 日本時間で設定してUTCに変換
+          const scheduledJST = new Date(nowJST);
+          scheduledJST.setUTCHours(hours, minutes, 0, 0);
+          // JST -> UTC に変換（9時間引く）
+          const scheduledUTC = new Date(scheduledJST.getTime() - JST_OFFSET);
+          availableTimes.push({ date: scheduledUTC, time });
         }
       }
 
@@ -107,17 +120,20 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       while (availableTimes.length < generatedTweets.length) {
         for (const time of postTimes) {
           const [hours, minutes] = time.split(':').map(Number);
-          const scheduledDate = new Date(now);
-          scheduledDate.setDate(scheduledDate.getDate() + daysToAdd);
-          scheduledDate.setHours(hours, minutes, 0, 0);
-          availableTimes.push({ date: scheduledDate, time });
+          // 日本時間で設定してUTCに変換
+          const scheduledJST = new Date(nowJST);
+          scheduledJST.setUTCDate(scheduledJST.getUTCDate() + daysToAdd);
+          scheduledJST.setUTCHours(hours, minutes, 0, 0);
+          // JST -> UTC に変換（9時間引く）
+          const scheduledUTC = new Date(scheduledJST.getTime() - JST_OFFSET);
+          availableTimes.push({ date: scheduledUTC, time });
 
           if (availableTimes.length >= generatedTweets.length) break;
         }
         daysToAdd++;
       }
 
-      return availableTimes[index]?.date || new Date(now.getTime() + (index + 1) * 60 * 60 * 1000);
+      return availableTimes[index]?.date || new Date(nowUTC.getTime() + (index + 1) * 60 * 60 * 1000);
     };
 
     for (let i = 0; i < generatedTweets.length; i++) {

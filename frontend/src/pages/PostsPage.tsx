@@ -637,6 +637,7 @@ export const PostsPage: React.FC = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editContent, setEditContent] = useState('');
   const [editPostId, setEditPostId] = useState<string | null>(null);
+  const [editScheduledAt, setEditScheduledAt] = useState('');
 
   // 手動投稿追加用
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
@@ -691,12 +692,20 @@ export const PostsPage: React.FC = () => {
   const handleEdit = (post: Post) => {
     setEditPostId(post.id);
     setEditContent(post.content);
+    // ISO形式からdatetime-local用の形式に変換
+    const date = new Date(post.scheduled_at);
+    const formatted = date.toISOString().slice(0, 16);
+    setEditScheduledAt(formatted);
     setEditDialogOpen(true);
   };
 
   const handleSaveEdit = async () => {
     if (editPostId) {
-      await updatePost({ post_id: editPostId, content: editContent });
+      await updatePost({
+        post_id: editPostId,
+        content: editContent,
+        scheduled_at: editScheduledAt ? new Date(editScheduledAt).toISOString() : undefined,
+      });
       setEditDialogOpen(false);
     }
   };
@@ -850,7 +859,7 @@ export const PostsPage: React.FC = () => {
 
         {/* Edit Dialog */}
         <Dialog open={editDialogOpen} onClose={() => setEditDialogOpen(false)} maxWidth="sm" fullWidth>
-          <DialogTitle>投稿を編集</DialogTitle>
+          <DialogTitle sx={{ fontWeight: 700 }}>投稿を編集</DialogTitle>
           <DialogContent>
             <TextField
               autoFocus
@@ -863,11 +872,30 @@ export const PostsPage: React.FC = () => {
               onChange={(e) => setEditContent(e.target.value)}
               helperText={`${editContent.length}/280文字`}
               error={editContent.length > 280}
+              sx={{ mb: 2 }}
+            />
+            <TextField
+              margin="dense"
+              label="投稿予定日時"
+              type="datetime-local"
+              fullWidth
+              value={editScheduledAt}
+              onChange={(e) => setEditScheduledAt(e.target.value)}
+              InputLabelProps={{ shrink: true }}
+              helperText="投稿する日時を変更できます"
             />
           </DialogContent>
-          <DialogActions>
+          <DialogActions sx={{ p: 2 }}>
             <Button onClick={() => setEditDialogOpen(false)}>キャンセル</Button>
-            <Button onClick={handleSaveEdit} variant="contained" disabled={editContent.length > 280}>
+            <Button
+              onClick={handleSaveEdit}
+              variant="contained"
+              disabled={editContent.length > 280}
+              sx={{
+                background: 'linear-gradient(135deg, #1DA1F2 0%, #0E7FC7 100%)',
+                fontWeight: 600,
+              }}
+            >
               保存
             </Button>
           </DialogActions>
