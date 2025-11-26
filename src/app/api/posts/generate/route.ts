@@ -76,11 +76,56 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const savedPosts: Post[] = [];
     const now = new Date();
 
+    // ユーザーの投稿時間帯設定を取得（設定がない場合はデフォルト値）
+    const postTimes = user.post_times && user.post_times.length > 0
+      ? user.post_times.sort()
+      : ['09:00', '12:00', '18:00'];
+
+    console.log('[API /api/posts/generate] User post_times:', postTimes);
+
+    // 次の投稿可能時刻を計算する関数
+    const getNextScheduledTime = (index: number): Date => {
+      const nowHours = now.getHours();
+      const nowMinutes = now.getMinutes();
+      const nowTimeStr = `${String(nowHours).padStart(2, '0')}:${String(nowMinutes).padStart(2, '0')}`;
+
+      // 今日の残りの時間帯と明日以降の時間帯を含めた配列を作成
+      const availableTimes: { date: Date; time: string }[] = [];
+
+      // 今日の時間帯
+      for (const time of postTimes) {
+        if (time > nowTimeStr) {
+          const [hours, minutes] = time.split(':').map(Number);
+          const scheduledDate = new Date(now);
+          scheduledDate.setHours(hours, minutes, 0, 0);
+          availableTimes.push({ date: scheduledDate, time });
+        }
+      }
+
+      // 明日以降の時間帯（必要な分だけ追加）
+      let daysToAdd = 1;
+      while (availableTimes.length < generatedTweets.length) {
+        for (const time of postTimes) {
+          const [hours, minutes] = time.split(':').map(Number);
+          const scheduledDate = new Date(now);
+          scheduledDate.setDate(scheduledDate.getDate() + daysToAdd);
+          scheduledDate.setHours(hours, minutes, 0, 0);
+          availableTimes.push({ date: scheduledDate, time });
+
+          if (availableTimes.length >= generatedTweets.length) break;
+        }
+        daysToAdd++;
+      }
+
+      return availableTimes[index]?.date || new Date(now.getTime() + (index + 1) * 60 * 60 * 1000);
+    };
+
     for (let i = 0; i < generatedTweets.length; i++) {
       const content = generatedTweets[i];
 
-      // 投稿予定時刻を計算（最初の投稿は1時間後、以降は1時間ずつ追加）
-      const scheduledAt = new Date(now.getTime() + (i + 1) * 60 * 60 * 1000);
+      // ユーザーの設定に基づいて投稿予定時刻を計算
+      const scheduledAt = getNextScheduledTime(i);
+      console.log(`[API /api/posts/generate] Post ${i + 1} scheduled at:`, scheduledAt.toISOString());
 
       const newPost = await createPost({
         userId,
