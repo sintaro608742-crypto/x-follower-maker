@@ -24,9 +24,9 @@ export async function GET(): Promise<NextResponse> {
       ? `${apiKey.slice(0, 4)}...${apiKey.slice(-4)}`
       : '****';
 
-    // 簡単なGemini APIテスト（gemini-pro、v1beta API）
+    // 簡単なGemini APIテスト（gemini-2.0-flash、v1beta API）
     const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: {
