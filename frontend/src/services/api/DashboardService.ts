@@ -223,8 +223,8 @@ export class DashboardService {
    * AIで投稿を生成
    * POST /api/posts/generate
    */
-  async generatePosts(count: number = 1): Promise<GeneratePostsResponse> {
-    logger.debug('Generating posts with AI', { count });
+  async generatePosts(count: number = 1, tone: string = 'casual'): Promise<GeneratePostsResponse> {
+    logger.debug('Generating posts with AI', { count, tone });
 
     try {
       const response = await fetch(`${this.baseUrl}/api/posts/generate`, {
@@ -233,7 +233,7 @@ export class DashboardService {
           'Content-Type': 'application/json',
         },
         credentials: 'include',
-        body: JSON.stringify({ count }),
+        body: JSON.stringify({ count, tone }),
       });
 
       if (!response.ok) {

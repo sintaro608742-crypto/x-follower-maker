@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Box, Typography, CircularProgress, Alert, Grid, Snackbar, Button, Paper, Slider, Dialog, DialogTitle, DialogContent, DialogActions } from '@mui/material';
+import { Box, Typography, CircularProgress, Alert, Grid, Snackbar, Button, Paper, Slider, Dialog, DialogTitle, DialogContent, DialogActions, ToggleButton, ToggleButtonGroup } from '@mui/material';
 import { MainLayout } from '@/layouts/MainLayout';
 import { motion } from 'framer-motion';
 import { Clock, List, Sparkles } from 'lucide-react';
@@ -33,6 +33,15 @@ export const DashboardPage = () => {
   const [generateDialogOpen, setGenerateDialogOpen] = useState(false);
   const [generateCount, setGenerateCount] = useState(3);
   const [generating, setGenerating] = useState(false);
+  const [generateTone, setGenerateTone] = useState<'casual' | 'professional' | 'humorous' | 'educational'>('casual');
+
+  // トーンオプション定義
+  const TONE_OPTIONS = [
+    { value: 'casual', label: 'カジュアル', description: '親しみやすく気軽な雰囲気' },
+    { value: 'professional', label: 'プロフェッショナル', description: '信頼感のある丁寧な表現' },
+    { value: 'humorous', label: 'ユーモア', description: '面白く印象に残る内容' },
+    { value: 'educational', label: '教育的', description: '役立つ情報を分かりやすく' },
+  ] as const;
 
   const showSnackbar = (message: string, severity: 'success' | 'error' = 'success') => {
     setSnackbarMessage(message);
@@ -146,9 +155,9 @@ export const DashboardPage = () => {
   const handleGeneratePosts = async () => {
     try {
       setGenerating(true);
-      logger.debug('Generating posts with AI', { count: generateCount, component: 'DashboardPage' });
+      logger.debug('Generating posts with AI', { count: generateCount, tone: generateTone, component: 'DashboardPage' });
 
-      const response = await generatePosts(generateCount);
+      const response = await generatePosts(generateCount, generateTone);
 
       showSnackbar(response.message, 'success');
       setGenerateDialogOpen(false);
@@ -246,7 +255,7 @@ export const DashboardPage = () => {
               onKeywordToggle={handleKeywordToggle}
             />
 
-            {/* AI Generate Posts Button */}
+            {/* AI Generate Posts Section */}
             <Paper
               sx={{
                 mt: 2,
@@ -256,19 +265,68 @@ export const DashboardPage = () => {
                 boxShadow: '0 8px 32px rgba(102, 126, 234, 0.3)',
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <Box>
-                  <Typography
-                    variant="h6"
-                    sx={{ color: '#FFFFFF', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}
-                  >
-                    <Sparkles size={24} />
-                    AI投稿を生成
-                  </Typography>
-                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)', mt: 0.5 }}>
-                    選択したキーワードに基づいてAIが魅力的なツイートを自動生成
-                  </Typography>
-                </Box>
+              <Box sx={{ mb: 2 }}>
+                <Typography
+                  variant="h6"
+                  sx={{ color: '#FFFFFF', fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}
+                >
+                  <Sparkles size={24} />
+                  AI投稿を生成
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.8)', mt: 0.5 }}>
+                  選択したキーワードに基づいてAIが魅力的なツイートを自動生成
+                </Typography>
+              </Box>
+
+              {/* Tone Selection */}
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)', fontWeight: 600, mb: 1 }}>
+                  トーン・スタイル
+                </Typography>
+                <ToggleButtonGroup
+                  value={generateTone}
+                  exclusive
+                  onChange={(_, value) => value && setGenerateTone(value)}
+                  sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 0.5,
+                    '& .MuiToggleButton-root': {
+                      flex: '1 1 calc(50% - 4px)',
+                      border: '1px solid rgba(255,255,255,0.3)',
+                      borderRadius: '8px !important',
+                      py: 1,
+                      px: 1.5,
+                      textTransform: 'none',
+                      color: 'rgba(255,255,255,0.8)',
+                      '&.Mui-selected': {
+                        backgroundColor: 'rgba(255,255,255,0.2)',
+                        borderColor: 'rgba(255,255,255,0.8)',
+                        color: '#FFFFFF',
+                        '&:hover': {
+                          backgroundColor: 'rgba(255,255,255,0.25)',
+                        },
+                      },
+                      '&:hover': {
+                        backgroundColor: 'rgba(255,255,255,0.1)',
+                      },
+                    },
+                  }}
+                >
+                  {TONE_OPTIONS.map((option) => (
+                    <ToggleButton key={option.value} value={option.value}>
+                      <Box sx={{ textAlign: 'left', width: '100%' }}>
+                        <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.8rem' }}>
+                          {option.label}
+                        </Typography>
+                      </Box>
+                    </ToggleButton>
+                  ))}
+                </ToggleButtonGroup>
+              </Box>
+
+              {/* Generate Button */}
+              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <Button
                   variant="contained"
                   onClick={handleOpenGenerateDialog}
@@ -410,6 +468,16 @@ export const DashboardPage = () => {
                 }}
               />
             </Box>
+            {/* Selected Tone Display */}
+            <Box sx={{ mt: 2, p: 2, bgcolor: 'grey.50', borderRadius: 2 }}>
+              <Typography variant="body2" color="text.secondary">
+                選択中のトーン: <strong>{TONE_OPTIONS.find(t => t.value === generateTone)?.label}</strong>
+              </Typography>
+              <Typography variant="caption" color="text.secondary">
+                {TONE_OPTIONS.find(t => t.value === generateTone)?.description}
+              </Typography>
+            </Box>
+
             <Alert severity="info" sx={{ mt: 2 }}>
               生成には数秒かかる場合があります。生成された投稿は「投稿管理」ページで確認・編集できます。
             </Alert>

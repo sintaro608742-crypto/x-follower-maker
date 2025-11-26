@@ -21,16 +21,6 @@ export const useDashboardData = () => {
   // 連続クリック時のレースコンディション防止用ref
   const latestKeywordsRef = useRef<string[]>([]);
 
-  // プリセットキーワードのラベル一覧
-  const PRESET_KEYWORD_LABELS = [
-    'ビジネス・起業',
-    'プログラミング・技術',
-    'デザイン・クリエイティブ',
-    'マーケティング・SNS',
-    '筋トレ・健康',
-    '投資・副業'
-  ];
-
   const fetchData = async () => {
     try {
       setLoading(true);
@@ -38,24 +28,11 @@ export const useDashboardData = () => {
       logger.debug('Fetching dashboard data', { hookName: 'useDashboardData' });
 
       const result = await service.getDashboardData();
+      const keywords = result.user.keywords || [];
 
-      // プリセットに存在しないキーワードをフィルタリング
-      const filteredKeywords = (result.user.keywords || []).filter(
-        keyword => PRESET_KEYWORD_LABELS.includes(keyword)
-      );
-
-      // フィルタリングされたキーワードでデータを更新
-      const filteredResult = {
-        ...result,
-        user: {
-          ...result.user,
-          keywords: filteredKeywords
-        }
-      };
-
-      setData(filteredResult);
+      setData(result);
       // refも同期
-      latestKeywordsRef.current = filteredKeywords;
+      latestKeywordsRef.current = keywords;
 
       logger.info('Dashboard data fetched successfully', {
         hookName: 'useDashboardData',
@@ -215,12 +192,12 @@ export const useDashboardData = () => {
     }
   };
 
-  const generatePosts = async (count: number = 1): Promise<GeneratePostsResponse> => {
+  const generatePosts = async (count: number = 1, tone: string = 'casual'): Promise<GeneratePostsResponse> => {
     try {
       setUpdating(true);
-      logger.debug('Generating posts with AI', { count, hookName: 'useDashboardData' });
+      logger.debug('Generating posts with AI', { count, tone, hookName: 'useDashboardData' });
 
-      const response = await service.generatePosts(count);
+      const response = await service.generatePosts(count, tone);
 
       // データを再取得して投稿リストを更新
       await fetchData();

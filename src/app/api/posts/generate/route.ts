@@ -34,7 +34,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     console.log('[API /api/posts/generate] User authenticated:', userId);
 
     // リクエストボディ取得
-    let body: { count?: number } = {};
+    let body: { count?: number; tone?: string } = {};
     try {
       body = await request.json();
     } catch {
@@ -46,7 +46,11 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     if (count < 1 || count > 5) {
       throw new ValidationError('count must be between 1 and 5');
     }
-    console.log('[API /api/posts/generate] Generating', count, 'posts');
+
+    // toneのバリデーション
+    const validTones = ['casual', 'professional', 'humorous', 'educational'];
+    const tone = body.tone && validTones.includes(body.tone) ? body.tone : 'casual';
+    console.log('[API /api/posts/generate] Generating', count, 'posts with tone:', tone);
 
     // ユーザー情報を取得（キーワード取得のため）
     const user = await getUserById(userId);
@@ -64,6 +68,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const generatedTweets = await generatePosts({
       keywords: user.keywords,
       count,
+      tone,
     });
     console.log('[API /api/posts/generate] Gemini API returned', generatedTweets.length, 'tweets');
 
