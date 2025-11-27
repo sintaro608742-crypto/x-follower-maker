@@ -6,5 +6,15 @@
   "regions": ["iad1"],
   "env": {
     "NODE_ENV": "production"
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/post-tweets",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/record-followers",
+      "schedule": "0 * * * *"
+    }
+  ]
 }

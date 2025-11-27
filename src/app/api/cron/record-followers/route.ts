@@ -111,9 +111,21 @@ async function handler(req: NextRequest) {
   }
 }
 
-// QStash署名検証を有効化
-// 本番環境ではverifySignatureAppRouterでラップ
-// 開発環境では署名検証をスキップするため、環境変数でチェック
+// Vercel Cron用のGETハンドラー
+export async function GET(req: NextRequest) {
+  const authHeader = req.headers.get('authorization');
+  const cronSecret = process.env.CRON_SECRET;
+
+  if (process.env.NODE_ENV === 'production' && cronSecret) {
+    if (authHeader !== `Bearer ${cronSecret}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+  }
+
+  return handler(req);
+}
+
+// QStash用のPOSTハンドラー（後方互換性）
 export const POST =
   process.env.NODE_ENV === 'production'
     ? verifySignatureAppRouter(handler)

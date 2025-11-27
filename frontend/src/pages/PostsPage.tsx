@@ -656,12 +656,22 @@ export const PostsPage: React.FC = () => {
     setSnackbarOpen(true);
   };
 
+  // ローカルタイムゾーンでdatetime-local用の形式に変換するヘルパー
+  const formatDateTimeLocal = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
+
   const handleOpenCreateDialog = () => {
     // デフォルトで1時間後を設定
     const defaultTime = new Date();
     defaultTime.setHours(defaultTime.getHours() + 1);
     defaultTime.setMinutes(0);
-    const formatted = defaultTime.toISOString().slice(0, 16);
+    const formatted = formatDateTimeLocal(defaultTime);
     setNewPostScheduledAt(formatted);
     setNewPostContent('');
     setCreateDialogOpen(true);
@@ -692,9 +702,9 @@ export const PostsPage: React.FC = () => {
   const handleEdit = (post: Post) => {
     setEditPostId(post.id);
     setEditContent(post.content);
-    // ISO形式からdatetime-local用の形式に変換
+    // ローカルタイムゾーンでdatetime-local用の形式に変換
     const date = new Date(post.scheduled_at);
-    const formatted = date.toISOString().slice(0, 16);
+    const formatted = formatDateTimeLocal(date);
     setEditScheduledAt(formatted);
     setEditDialogOpen(true);
   };
