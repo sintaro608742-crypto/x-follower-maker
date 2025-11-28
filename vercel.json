@@ -10,11 +10,11 @@
   "crons": [
     {
       "path": "/api/cron/post-tweets",
-      "schedule": "*/5 * * * *"
+      "schedule": "0 0 * * *"
     },
     {
       "path": "/api/cron/record-followers",
-      "schedule": "0 * * * *"
+      "schedule": "0 8 * * *"
     }
   ]
 }
