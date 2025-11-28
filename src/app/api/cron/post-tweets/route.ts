@@ -15,7 +15,7 @@ import {
   markPostAsPosted,
   markPostAsFailed,
 } from '@/repositories/posts.repository';
-import { createUserClient, postTweet } from '@/lib/twitter/client';
+import { createRefreshedUserClient, postTweet } from '@/lib/twitter/client';
 
 /**
  * Cron Job ハンドラー
@@ -45,19 +45,23 @@ async function handler(req: NextRequest) {
           const userResult = await db
             .select({
               twitter_access_token_encrypted: users.twitter_access_token_encrypted,
+              twitter_refresh_token_encrypted: users.twitter_refresh_token_encrypted,
             })
             .from(users)
             .where(eq(users.id, post.user_id))
             .limit(1);
 
-          if (userResult.length === 0 || !userResult[0].twitter_access_token_encrypted) {
+          if (userResult.length === 0 || !userResult[0].twitter_refresh_token_encrypted) {
             throw new Error('User not found or Twitter not connected');
           }
 
-          const encryptedToken = userResult[0].twitter_access_token_encrypted;
+          const encryptedRefreshToken = userResult[0].twitter_refresh_token_encrypted;
 
-          // Twitter APIクライアント作成
-          const twitterClient = createUserClient(encryptedToken);
+          // Twitter APIクライアント作成（トークンをリフレッシュ）
+          const twitterClient = await createRefreshedUserClient(
+            post.user_id,
+            encryptedRefreshToken
+          );
 
           // ツイート投稿
           const tweetId = await postTweet(twitterClient, post.content);

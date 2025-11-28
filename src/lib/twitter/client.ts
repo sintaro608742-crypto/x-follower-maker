@@ -5,7 +5,11 @@
  */
 
 import { TwitterApi } from 'twitter-api-v2';
-import { decrypt } from '../encryption';
+import { decrypt, encrypt } from '../encryption';
+import { refreshAccessToken } from './oauth';
+import { db } from '@/db/client';
+import { users } from '@/db/schema';
+import { eq } from 'drizzle-orm';
 
 /**
  * ユーザーのアクセストークンでTwitter APIクライアントを作成
@@ -16,6 +20,56 @@ import { decrypt } from '../encryption';
 export function createUserClient(encryptedAccessToken: string): TwitterApi {
   const accessToken = decrypt(encryptedAccessToken);
   return new TwitterApi(accessToken);
+}
+
+/**
+ * ユーザーのリフレッシュトークンを使ってアクセストークンを更新し、
+ * 新しいTwitter APIクライアントを作成
+ *
+ * @param userId - ユーザーID
+ * @param encryptedRefreshToken - 暗号化されたリフレッシュトークン
+ * @returns TwitterApi インスタンス
+ */
+export async function createRefreshedUserClient(
+  userId: string,
+  encryptedRefreshToken: string
+): Promise<TwitterApi> {
+  const clientId = process.env.TWITTER_CLIENT_ID?.trim();
+  const clientSecret = process.env.TWITTER_CLIENT_SECRET?.trim();
+
+  if (!clientId || !clientSecret) {
+    throw new Error('Twitter credentials not configured');
+  }
+
+  // リフレッシュトークンを復号化
+  const refreshToken = decrypt(encryptedRefreshToken);
+
+  // 新しいアクセストークンを取得
+  console.log('[Twitter] Refreshing access token for user:', userId);
+  const tokenResponse = await refreshAccessToken({
+    refreshToken,
+    clientId,
+    clientSecret,
+  });
+
+  // 新しいトークンを暗号化してDBに保存
+  const encryptedAccessToken = encrypt(tokenResponse.access_token);
+  const encryptedNewRefreshToken = tokenResponse.refresh_token
+    ? encrypt(tokenResponse.refresh_token)
+    : encryptedRefreshToken; // 新しいリフレッシュトークンがなければ既存を使用
+
+  await db
+    .update(users)
+    .set({
+      twitter_access_token_encrypted: encryptedAccessToken,
+      twitter_refresh_token_encrypted: encryptedNewRefreshToken,
+      updated_at: new Date(),
+    })
+    .where(eq(users.id, userId));
+
+  console.log('[Twitter] Token refreshed and saved for user:', userId);
+
+  return new TwitterApi(tokenResponse.access_token);
 }
 
 /**
