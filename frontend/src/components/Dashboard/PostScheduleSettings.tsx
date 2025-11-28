@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Card, Chip, Slider, Typography } from '@mui/material';
+import { Box, Card, Chip, Slider, Typography, TextField, IconButton, Tooltip } from '@mui/material';
 import { motion } from 'framer-motion';
-import { Calendar } from 'lucide-react';
+import { Calendar, Plus, X } from 'lucide-react';
 
 interface PostScheduleSettingsProps {
   frequency: number;
@@ -10,7 +10,7 @@ interface PostScheduleSettingsProps {
   onPostTimesChange: (times: string[]) => void;
 }
 
-const AVAILABLE_TIME_SLOTS = [
+const PRESET_TIME_SLOTS = [
   '06:00',
   '09:00',
   '12:00',
@@ -27,6 +27,7 @@ export const PostScheduleSettings: React.FC<PostScheduleSettingsProps> = ({
   onPostTimesChange
 }) => {
   const [localFrequency, setLocalFrequency] = useState(frequency);
+  const [customTime, setCustomTime] = useState('');
 
   // 親コンポーネントからのfrequency更新を反映
   useEffect(() => {
@@ -56,6 +57,34 @@ export const PostScheduleSettings: React.FC<PostScheduleSettingsProps> = ({
 
     onPostTimesChange(newTimes);
   };
+
+  const handleAddCustomTime = () => {
+    if (!customTime) return;
+
+    // HH:MM形式に変換
+    const formattedTime = customTime.substring(0, 5);
+
+    // 既に存在する場合は追加しない
+    if (postTimes.includes(formattedTime)) {
+      setCustomTime('');
+      return;
+    }
+
+    const newTimes = [...postTimes, formattedTime].sort();
+    onPostTimesChange(newTimes);
+    setCustomTime('');
+  };
+
+  const handleRemoveTime = (time: string) => {
+    const newTimes = postTimes.filter(t => t !== time);
+    onPostTimesChange(newTimes);
+  };
+
+  // カスタム時間かどうかを判定
+  const isCustomTime = (time: string) => !PRESET_TIME_SLOTS.includes(time);
+
+  // 全ての選択された時間（プリセット + カスタム）
+  const allSelectedTimes = [...postTimes].sort();
 
   return (
     <motion.div
@@ -149,7 +178,7 @@ export const PostScheduleSettings: React.FC<PostScheduleSettingsProps> = ({
             投稿時間帯
           </Typography>
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
-            {AVAILABLE_TIME_SLOTS.map((time, index) => {
+            {PRESET_TIME_SLOTS.map((time, index) => {
               const isActive = postTimes.includes(time);
               return (
                 <motion.div
@@ -194,6 +223,102 @@ export const PostScheduleSettings: React.FC<PostScheduleSettingsProps> = ({
               );
             })}
           </Box>
+
+          {/* カスタム時間入力 */}
+          <Box sx={{ mt: 3 }}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mb: 1.5, fontWeight: 500 }}
+            >
+              カスタム時間を追加
+            </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <TextField
+                type="time"
+                value={customTime}
+                onChange={(e) => setCustomTime(e.target.value)}
+                size="small"
+                sx={{
+                  width: 140,
+                  '& .MuiOutlinedInput-root': {
+                    fontFamily: 'SF Mono, Monaco, monospace',
+                    fontSize: '16px',
+                    '&:hover fieldset': {
+                      borderColor: '#1DA1F2',
+                    },
+                    '&.Mui-focused fieldset': {
+                      borderColor: '#1DA1F2',
+                    }
+                  }
+                }}
+                inputProps={{
+                  step: 300, // 5分刻み
+                }}
+              />
+              <Tooltip title="追加">
+                <IconButton
+                  onClick={handleAddCustomTime}
+                  disabled={!customTime}
+                  sx={{
+                    bgcolor: customTime ? '#1DA1F2' : '#E5E7EB',
+                    color: '#FFFFFF',
+                    '&:hover': {
+                      bgcolor: customTime ? '#0E7FC7' : '#E5E7EB',
+                    },
+                    '&.Mui-disabled': {
+                      color: '#9CA3AF',
+                    }
+                  }}
+                >
+                  <Plus size={20} />
+                </IconButton>
+              </Tooltip>
+            </Box>
+          </Box>
+
+          {/* 選択された時間一覧（カスタム時間のみ表示） */}
+          {allSelectedTimes.filter(isCustomTime).length > 0 && (
+            <Box sx={{ mt: 2.5 }}>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mb: 1.5, fontWeight: 500 }}
+              >
+                追加したカスタム時間
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {allSelectedTimes.filter(isCustomTime).map((time) => (
+                  <motion.div
+                    key={time}
+                    initial={{ opacity: 0, scale: 0.9 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                  >
+                    <Chip
+                      label={time}
+                      onDelete={() => handleRemoveTime(time)}
+                      deleteIcon={<X size={16} />}
+                      sx={{
+                        py: 2,
+                        px: 1.5,
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        fontFamily: 'SF Mono, Monaco, monospace',
+                        bgcolor: '#10B981',
+                        color: '#FFFFFF',
+                        '& .MuiChip-deleteIcon': {
+                          color: 'rgba(255,255,255,0.8)',
+                          '&:hover': {
+                            color: '#FFFFFF',
+                          }
+                        }
+                      }}
+                    />
+                  </motion.div>
+                ))}
+              </Box>
+            </Box>
+          )}
         </Box>
       </Card>
     </motion.div>
