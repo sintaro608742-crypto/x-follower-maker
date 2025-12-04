@@ -30,14 +30,13 @@ export const components: Components<Omit<Theme, 'components'>> = {
     styleOverrides: {
       root: {
         borderRadius: 12,
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.3)',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
         transition: 'all 0.3s ease-out',
-        background: 'rgba(26, 26, 46, 0.8)',
-        backdropFilter: 'blur(10px)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        background: '#FFFFFF',
+        border: '1px solid #E5E7EB',
         '&:hover': {
-          transform: 'translateY(-4px)',
-          boxShadow: '0 8px 30px rgba(167, 85, 247, 0.3)',
+          transform: 'translateY(-2px)',
+          boxShadow: '0 4px 16px rgba(0, 0, 0, 0.12)',
         },
       },
     },

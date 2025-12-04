@@ -7,7 +7,7 @@ import {
   ListItemText,
   Toolbar,
 } from '@mui/material';
-import { LayoutDashboard, FileText } from 'lucide-react';
+import { LayoutDashboard, FileText, Library } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 interface SidebarProps {
@@ -28,6 +28,11 @@ const menuItems: MenuItem[] = [
     text: 'ダッシュボード',
     icon: <LayoutDashboard size={24} />,
     path: '/dashboard',
+  },
+  {
+    text: 'ソースライブラリ',
+    icon: <Library size={24} />,
+    path: '/sources',
   },
   {
     text: '投稿管理',

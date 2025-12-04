@@ -39,17 +39,30 @@ export async function PUT(request: NextRequest): Promise<NextResponse<SettingsUp
       );
     }
 
-    const { post_frequency, post_times } = validationResult.data as PostScheduleUpdateRequest;
+    const { post_frequency, post_times, auto_post_source_ids } = validationResult.data as PostScheduleUpdateRequest;
 
     // データベース更新
     try {
+      // 更新するフィールドを構築
+      const updateData: {
+        post_frequency: number;
+        post_times: string[];
+        auto_post_source_ids?: string[];
+        updated_at: Date;
+      } = {
+        post_frequency,
+        post_times,
+        updated_at: new Date(),
+      };
+
+      // auto_post_source_ids が指定されていれば更新
+      if (auto_post_source_ids !== undefined) {
+        updateData.auto_post_source_ids = auto_post_source_ids;
+      }
+
       const updateResult = await db
         .update(users)
-        .set({
-          post_frequency,
-          post_times,
-          updated_at: new Date(),
-        })
+        .set(updateData)
         .where(eq(users.id, userId))
         .returning({ id: users.id });
 

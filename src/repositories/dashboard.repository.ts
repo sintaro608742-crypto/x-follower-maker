@@ -30,6 +30,7 @@ export async function getUserById(userId: string): Promise<User> {
         keywords: users.keywords,
         post_frequency: users.post_frequency,
         post_times: users.post_times,
+        auto_post_source_ids: users.auto_post_source_ids,
         created_at: users.created_at,
         updated_at: users.updated_at,
       })
@@ -49,6 +50,7 @@ export async function getUserById(userId: string): Promise<User> {
       keywords: user.keywords ?? [],
       post_frequency: user.post_frequency,
       post_times: user.post_times ?? [],
+      auto_post_source_ids: user.auto_post_source_ids ?? [],
       created_at: user.created_at.toISOString(),
       updated_at: user.updated_at.toISOString(),
     };

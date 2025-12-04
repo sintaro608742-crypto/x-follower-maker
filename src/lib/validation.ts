@@ -44,12 +44,12 @@ export const keywordsSchema = z
 
 /**
  * 投稿頻度のバリデーションスキーマ
- * 3-5の整数
+ * 1-5の整数
  */
 export const postFrequencySchema = z
   .number()
   .int('Post frequency must be an integer')
-  .min(3, 'Post frequency must be at least 3')
+  .min(1, 'Post frequency must be at least 1')
   .max(5, 'Post frequency must be at most 5');
 
 /**
@@ -98,11 +98,20 @@ export const keywordUpdateRequestSchema = z.object({
 });
 
 /**
+ * 自動投稿ソースIDのバリデーションスキーマ
+ * UUID形式の文字列配列（オプション）
+ */
+export const autoPostSourceIdsSchema = z
+  .array(uuidSchema)
+  .optional();
+
+/**
  * 投稿スケジュール更新リクエストのバリデーション
  */
 export const postScheduleUpdateRequestSchema = z.object({
   post_frequency: postFrequencySchema,
   post_times: postTimesSchema,
+  auto_post_source_ids: autoPostSourceIdsSchema,
 });
 
 /**

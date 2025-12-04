@@ -1,19 +1,23 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { DashboardService } from '@/services/api/DashboardService';
+import { SourcesService } from '@/services/api/SourcesService';
 import type { GeneratePostsResponse } from '@/services/api/DashboardService';
 import type {
   DashboardData,
   KeywordUpdateRequest,
   PostScheduleUpdateRequest,
   TwitterDisconnectRequest,
-  SettingsUpdateResponse
+  SettingsUpdateResponse,
+  Source
 } from '@/types';
 import { logger } from '@/lib/logger';
 
 const service = new DashboardService();
+const sourcesService = new SourcesService();
 
 export const useDashboardData = () => {
   const [data, setData] = useState<DashboardData | null>(null);
+  const [sources, setSources] = useState<Source[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const [updating, setUpdating] = useState(false);
@@ -27,16 +31,23 @@ export const useDashboardData = () => {
       setError(null);
       logger.debug('Fetching dashboard data', { hookName: 'useDashboardData' });
 
-      const result = await service.getDashboardData();
+      // ダッシュボードデータとソースを並行取得
+      const [result, sourcesResult] = await Promise.all([
+        service.getDashboardData(),
+        sourcesService.getList().catch(() => ({ sources: [], total: 0 }))
+      ]);
+
       const keywords = result.user.keywords || [];
 
       setData(result);
+      setSources(sourcesResult.sources || []);
       // refも同期
       latestKeywordsRef.current = keywords;
 
       logger.info('Dashboard data fetched successfully', {
         hookName: 'useDashboardData',
-        twitterStatus: result.twitterStatus
+        twitterStatus: result.twitterStatus,
+        sourcesCount: sourcesResult.sources?.length || 0
       });
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
@@ -104,19 +115,22 @@ export const useDashboardData = () => {
 
   const updatePostSchedule = async (
     frequency: number,
-    times: string[]
+    times: string[],
+    autoPostSourceIds?: string[]
   ): Promise<SettingsUpdateResponse> => {
     try {
       setUpdating(true);
       logger.debug('Updating post schedule', {
         frequency,
         times,
+        autoPostSourceIds,
         hookName: 'useDashboardData'
       });
 
       const request: PostScheduleUpdateRequest = {
         post_frequency: frequency,
-        post_times: times
+        post_times: times,
+        auto_post_source_ids: autoPostSourceIds
       };
       const response = await service.updatePostSchedule(request);
 
@@ -126,7 +140,8 @@ export const useDashboardData = () => {
       logger.info('Post schedule updated successfully', {
         hookName: 'useDashboardData',
         frequency,
-        times
+        times,
+        autoPostSourceIds
       });
 
       return response;
@@ -243,6 +258,7 @@ export const useDashboardData = () => {
 
   return {
     data,
+    sources,
     loading,
     error,
     updating,

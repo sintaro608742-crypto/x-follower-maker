@@ -182,6 +182,7 @@ export interface KeywordUpdateRequest {
 export interface PostScheduleUpdateRequest {
   post_frequency: number;
   post_times: string[];
+  auto_post_source_ids?: string[]; // 自動投稿に使用するソースのID配列（オプション）
 }
 
 // X連携解除リクエスト型
@@ -193,4 +194,99 @@ export interface TwitterDisconnectRequest {
 export interface SettingsUpdateResponse {
   success: boolean;
   message: string;
+}
+
+// =====================================
+// ソースライブラリ関連の型
+// =====================================
+
+// ソースタイプ型
+export type SourceType = 'url' | 'pdf' | 'docx' | 'txt' | 'md';
+
+// 生成スタイル型
+export type GenerationStyle = 'summary' | 'opinion' | 'quote';
+
+// ソースメタデータ型
+export interface SourceMetadata {
+  domain?: string;
+  author?: string;
+  published_date?: string;
+  file_name?: string;
+  file_type?: string;
+  description?: string;
+}
+
+// ソース型
+export interface Source {
+  id: string;
+  user_id: string;
+  title: string;
+  description?: string;
+  source_type: SourceType;
+  source_url?: string;
+  file_path?: string;
+  file_size?: number;
+  extracted_text: string;
+  word_count: number;
+  metadata?: SourceMetadata;
+  created_at: string;
+  updated_at: string;
+}
+
+// 生成済み投稿型
+export interface GeneratedPost {
+  id: string;
+  source_id: string;
+  style: GenerationStyle;
+  content: string;
+  char_count: number;
+  scheduled_post_id?: string;
+  created_at: string;
+}
+
+// ソース一覧レスポンス型
+export interface SourceListResponse {
+  sources: Source[];
+  total: number;
+}
+
+// ソース作成（URL）リクエスト型
+export interface SourceCreateFromUrlRequest {
+  url: string;
+  title?: string;
+}
+
+// ソース作成レスポンス型
+export interface SourceCreateResponse {
+  source: Source;
+  message: string;
+}
+
+// ソース詳細レスポンス型
+export interface SourceDetailResponse {
+  source: Source;
+  generated_posts: GeneratedPost[];
+}
+
+// ソース投稿生成リクエスト型
+export interface SourceGeneratePostsRequest {
+  style: GenerationStyle;
+  count: number;
+  custom_prompt?: string;
+}
+
+// ソース投稿生成レスポンス型
+export interface SourceGeneratePostsResponse {
+  posts: GeneratedPost[];
+  source_title: string;
+  style: GenerationStyle;
+  message: string;
+}
+
+// 生成スタイル情報型
+export interface GenerationStyleInfo {
+  id: GenerationStyle;
+  title: string;
+  description: string;
+  icon: string;
 }

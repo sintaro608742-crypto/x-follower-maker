@@ -7,6 +7,7 @@ export interface User {
   keywords: string[];
   post_frequency: number;
   post_times: string[];
+  auto_post_source_ids: string[]; // 自動投稿に使用するソースのID配列
   created_at: string;
   updated_at: string;
 }
@@ -182,6 +183,7 @@ export interface KeywordUpdateRequest {
 export interface PostScheduleUpdateRequest {
   post_frequency: number;
   post_times: string[];
+  auto_post_source_ids?: string[]; // 自動投稿に使用するソースのID配列（オプション）
 }
 
 // X連携解除リクエスト型
@@ -193,4 +195,112 @@ export interface TwitterDisconnectRequest {
 export interface SettingsUpdateResponse {
   success: boolean;
   message: string;
+}
+
+// =====================================
+// ソースライブラリ機能（新機能）
+// =====================================
+
+// ソースタイプ型
+export type SourceType = 'url' | 'pdf' | 'docx' | 'txt' | 'md';
+
+// 生成スタイル型
+export type GenerationStyle = 'summary' | 'opinion' | 'quote';
+
+// ソース型
+export interface Source {
+  id: string;
+  user_id: string;
+  title: string;
+  description?: string;
+  source_type: SourceType;
+  source_url?: string;
+  file_path?: string;
+  file_size?: number;
+  extracted_text: string;
+  word_count: number;
+  metadata?: SourceMetadata;
+  created_at: string;
+  updated_at: string;
+}
+
+// ソースメタデータ型
+export interface SourceMetadata {
+  author?: string;
+  published_date?: string;
+  language?: string;
+  domain?: string;
+  page_count?: number;
+}
+
+// ソース一覧レスポンス型
+export interface SourceListResponse {
+  sources: Source[];
+  total: number;
+}
+
+// URL からソース作成リクエスト型
+export interface SourceCreateFromUrlRequest {
+  url: string;
+  title?: string;
+}
+
+// ファイルからソース作成レスポンス型（アップロード後）
+export interface SourceCreateResponse {
+  source: Source;
+  message: string;
+}
+
+// ソースから投稿生成リクエスト型
+export interface SourceGeneratePostsRequest {
+  source_id: string;
+  style: GenerationStyle;
+  count: number;
+  custom_prompt?: string;
+}
+
+// ソースから生成された投稿型
+export interface GeneratedPost {
+  id: string;
+  source_id: string;
+  style: GenerationStyle;
+  content: string;
+  char_count: number;
+  created_at: string;
+}
+
+// ソースから投稿生成レスポンス型
+export interface SourceGeneratePostsResponse {
+  posts: GeneratedPost[];
+  source_title: string;
+  style: GenerationStyle;
+  message: string;
+}
+
+// 生成された投稿を投稿予約に追加するリクエスト型
+export interface ScheduleGeneratedPostRequest {
+  generated_post_id: string;
+  scheduled_at: string;
+}
+
+// ソース処理ステータス型（非同期処理用）
+export type SourceProcessingStatus = 'pending' | 'processing' | 'completed' | 'failed';
+
+// ソース処理ジョブ型
+export interface SourceProcessingJob {
+  id: string;
+  source_id: string;
+  status: SourceProcessingStatus;
+  progress?: number;
+  error_message?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// 生成スタイル情報型（UI用）
+export interface GenerationStyleInfo {
+  id: GenerationStyle;
+  title: string;
+  description: string;
+  icon: string;
 }

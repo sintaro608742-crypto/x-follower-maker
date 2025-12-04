@@ -7,16 +7,22 @@
  * 認証: 必須
  * Request Body:
  *   - count: 生成する投稿数（任意、デフォルト1、最大5）
+ *   - tone: 生成トーン（任意、デフォルト'casual'）
  * Response:
  *   - posts: 生成された投稿配列
  *   - message: 成功メッセージ
+ *
+ * 動作:
+ *   - auto_post_source_idsが設定されている場合: ソースから生成
+ *   - キーワードのみ設定されている場合: キーワードから生成
  */
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentUserId } from '@/lib/session';
 import { getUserById } from '@/repositories/dashboard.repository';
 import { createPost } from '@/repositories/posts.repository';
-import { generatePosts } from '@/lib/gemini';
+import { generatePosts, generatePostsFromSource } from '@/lib/gemini';
+import { getSourceById } from '@/repositories/sources.repository';
 import { handleApiError, ValidationError, ConflictError } from '@/lib/errors';
 import { Post } from '@/types';
 
@@ -52,24 +58,85 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const tone = body.tone && validTones.includes(body.tone) ? body.tone : 'casual';
     console.log('[API /api/posts/generate] Generating', count, 'posts with tone:', tone);
 
-    // ユーザー情報を取得（キーワード取得のため）
+    // ユーザー情報を取得（キーワードとソース設定取得のため）
     const user = await getUserById(userId);
     console.log('[API /api/posts/generate] User keywords:', user.keywords);
+    console.log('[API /api/posts/generate] Auto post source IDs:', user.auto_post_source_ids);
 
-    // キーワードが設定されているかチェック
-    if (!user.keywords || user.keywords.length === 0) {
+    // 生成されたツイートを格納
+    let generatedTweets: string[] = [];
+
+    // 優先順位: 1. ソースから生成 2. キーワードから生成
+    if (user.auto_post_source_ids && user.auto_post_source_ids.length > 0) {
+      // ソースから投稿を生成
+      console.log('[API /api/posts/generate] Generating from sources...');
+
+      // ランダムにソースを選択（複数ある場合は分散させる）
+      const sourceIds = user.auto_post_source_ids;
+      const postsPerSource = Math.ceil(count / sourceIds.length);
+
+      for (let i = 0; i < sourceIds.length && generatedTweets.length < count; i++) {
+        const sourceId = sourceIds[i];
+        try {
+          const source = await getSourceById(sourceId);
+          if (!source || source.user_id !== userId) {
+            console.log(`[API /api/posts/generate] Source ${sourceId} not found or unauthorized`);
+            continue;
+          }
+
+          // 残りの必要件数を計算
+          const remaining = count - generatedTweets.length;
+          const countForThisSource = Math.min(postsPerSource, remaining);
+
+          // スタイルをランダムに選択（バリエーションのため）
+          const styles = ['summary', 'opinion', 'quote'] as const;
+          const randomStyle = styles[Math.floor(Math.random() * styles.length)];
+
+          console.log(`[API /api/posts/generate] Generating ${countForThisSource} posts from source: ${source.title}`);
+
+          const sourcePosts = await generatePostsFromSource(
+            source.extracted_text,
+            source.title,
+            randomStyle,
+            countForThisSource
+          );
+
+          generatedTweets.push(...sourcePosts);
+        } catch (err) {
+          console.error(`[API /api/posts/generate] Failed to generate from source ${sourceId}:`, err);
+        }
+      }
+
+      // ソースから生成できなかった場合のフォールバック
+      if (generatedTweets.length === 0) {
+        console.log('[API /api/posts/generate] No posts generated from sources, falling back to keywords');
+        if (!user.keywords || user.keywords.length === 0) {
+          throw new ConflictError(
+            '設定されたソースからの投稿生成に失敗しました。キーワードも設定されていないため、投稿を生成できません。'
+          );
+        }
+        // キーワードからの生成にフォールバック
+        generatedTweets = await generatePosts({
+          keywords: user.keywords,
+          count,
+          tone,
+        });
+      }
+    } else if (user.keywords && user.keywords.length > 0) {
+      // キーワードから投稿を生成
+      console.log('[API /api/posts/generate] Calling Gemini API with keywords...');
+      generatedTweets = await generatePosts({
+        keywords: user.keywords,
+        count,
+        tone,
+      });
+    } else {
+      // ソースもキーワードも設定されていない
       throw new ConflictError(
-        'キーワードが設定されていません。ダッシュボードでキーワードを設定してください。'
+        'キーワードまたは自動投稿ソースを設定してください。ダッシュボードで設定できます。'
       );
     }
 
-    // Gemini APIで投稿を生成
-    console.log('[API /api/posts/generate] Calling Gemini API...');
-    const generatedTweets = await generatePosts({
-      keywords: user.keywords,
-      count,
-      tone,
-    });
     console.log('[API /api/posts/generate] Gemini API returned', generatedTweets.length, 'tweets');
 
     // 生成された投稿をDBに保存

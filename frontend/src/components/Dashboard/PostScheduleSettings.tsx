@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Card, Chip, Slider, Typography, TextField, IconButton, Tooltip } from '@mui/material';
+import { Box, Card, Chip, Slider, Typography, TextField, IconButton, Tooltip, Checkbox, FormControlLabel } from '@mui/material';
 import { motion } from 'framer-motion';
-import { Calendar, Plus, X } from 'lucide-react';
+import { Calendar, Plus, X, FileText, Link } from 'lucide-react';
+import type { Source } from '../../types';
 
 interface PostScheduleSettingsProps {
   frequency: number;
   postTimes: string[];
   onFrequencyChange: (frequency: number) => void;
   onPostTimesChange: (times: string[]) => void;
+  sources?: Source[];
+  selectedSourceIds?: string[];
+  onSourcesChange?: (sourceIds: string[]) => void;
 }
 
 const PRESET_TIME_SLOTS = [
@@ -24,10 +28,37 @@ export const PostScheduleSettings: React.FC<PostScheduleSettingsProps> = ({
   frequency,
   postTimes,
   onFrequencyChange,
-  onPostTimesChange
+  onPostTimesChange,
+  sources = [],
+  selectedSourceIds = [],
+  onSourcesChange
 }) => {
   const [localFrequency, setLocalFrequency] = useState(frequency);
   const [customTime, setCustomTime] = useState('');
+
+  // ソースの選択状態をトグル
+  const handleSourceToggle = (sourceId: string) => {
+    if (!onSourcesChange) return;
+
+    const isSelected = selectedSourceIds.includes(sourceId);
+    let newSelectedIds: string[];
+
+    if (isSelected) {
+      newSelectedIds = selectedSourceIds.filter(id => id !== sourceId);
+    } else {
+      newSelectedIds = [...selectedSourceIds, sourceId];
+    }
+
+    onSourcesChange(newSelectedIds);
+  };
+
+  // ソースタイプに応じたアイコンを取得
+  const getSourceIcon = (sourceType: string) => {
+    if (sourceType === 'url') {
+      return <Link size={16} />;
+    }
+    return <FileText size={16} />;
+  };
 
   // 親コンポーネントからのfrequency更新を反映
   useEffect(() => {
@@ -126,7 +157,7 @@ export const PostScheduleSettings: React.FC<PostScheduleSettingsProps> = ({
               value={localFrequency}
               onChange={handleFrequencyChange}
               onChangeCommitted={handleFrequencyCommit}
-              min={3}
+              min={1}
               max={5}
               step={1}
               marks
@@ -320,6 +351,109 @@ export const PostScheduleSettings: React.FC<PostScheduleSettingsProps> = ({
             </Box>
           )}
         </Box>
+
+        {/* ソースライブラリ連携 */}
+        {sources.length > 0 && onSourcesChange && (
+          <Box sx={{ mt: 3.5, pt: 3, borderTop: '1px solid #E5E7EB' }}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mb: 2, fontWeight: 500 }}
+            >
+              自動投稿に使用するソース
+            </Typography>
+            <Typography
+              variant="caption"
+              color="text.secondary"
+              sx={{ display: 'block', mb: 2 }}
+            >
+              選択したソースの内容を元に、AIが自動で投稿を生成します
+            </Typography>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
+              {sources.map((source) => {
+                const isSelected = selectedSourceIds.includes(source.id);
+                return (
+                  <motion.div
+                    key={source.id}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ duration: 0.2 }}
+                  >
+                    <Box
+                      onClick={() => handleSourceToggle(source.id)}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1.5,
+                        p: 2,
+                        borderRadius: 2,
+                        border: '2px solid',
+                        borderColor: isSelected ? '#1DA1F2' : '#E5E7EB',
+                        bgcolor: isSelected ? 'rgba(29, 161, 242, 0.05)' : '#FFFFFF',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease-out',
+                        '&:hover': {
+                          borderColor: '#1DA1F2',
+                          bgcolor: isSelected ? 'rgba(29, 161, 242, 0.1)' : 'rgba(29, 161, 242, 0.02)',
+                        }
+                      }}
+                    >
+                      <Checkbox
+                        checked={isSelected}
+                        onChange={() => handleSourceToggle(source.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        sx={{
+                          p: 0,
+                          color: '#9CA3AF',
+                          '&.Mui-checked': {
+                            color: '#1DA1F2',
+                          }
+                        }}
+                      />
+                      <Box sx={{ color: isSelected ? '#1DA1F2' : '#6B7280' }}>
+                        {getSourceIcon(source.source_type)}
+                      </Box>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 600,
+                            color: isSelected ? '#1DA1F2' : '#374151',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {source.title}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                            display: 'block'
+                          }}
+                        >
+                          {source.word_count.toLocaleString()}文字
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </motion.div>
+                );
+              })}
+            </Box>
+            {selectedSourceIds.length > 0 && (
+              <Typography
+                variant="caption"
+                sx={{ display: 'block', mt: 2, color: '#1DA1F2', fontWeight: 500 }}
+              >
+                {selectedSourceIds.length}件のソースが選択されています
+              </Typography>
+            )}
+          </Box>
+        )}
       </Card>
     </motion.div>
   );

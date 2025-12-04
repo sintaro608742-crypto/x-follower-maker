@@ -17,6 +17,7 @@ import { logger } from '@/lib/logger';
 export const DashboardPage = () => {
   const {
     data,
+    sources,
     loading,
     error,
     updating,
@@ -141,6 +142,30 @@ export const DashboardPage = () => {
         component: 'DashboardPage'
       });
       showSnackbar('投稿時間帯の更新に失敗しました', 'error');
+    }
+  };
+
+  const handleSourcesChange = async (sourceIds: string[]) => {
+    if (!data?.user.post_frequency) return;
+
+    // post_timesが空の場合はエラーメッセージを表示
+    const postTimes = data?.user.post_times;
+    if (!postTimes || postTimes.length === 0) {
+      showSnackbar('先に投稿時間帯を1つ以上選択してください', 'error');
+      return;
+    }
+
+    try {
+      logger.debug('Updating auto post sources', { sourceIds, component: 'DashboardPage' });
+      const response = await updatePostSchedule(data.user.post_frequency, postTimes, sourceIds);
+      showSnackbar('自動投稿ソースを更新しました', 'success');
+    } catch (err) {
+      const error = err instanceof Error ? err : new Error(String(err));
+      logger.error('Auto post sources update failed', {
+        error: error.message,
+        component: 'DashboardPage'
+      });
+      showSnackbar('自動投稿ソースの更新に失敗しました', 'error');
     }
   };
 
@@ -368,6 +393,9 @@ export const DashboardPage = () => {
               postTimes={data.user.post_times}
               onFrequencyChange={handleFrequencyChange}
               onPostTimesChange={handlePostTimesChange}
+              sources={sources}
+              selectedSourceIds={data.user.auto_post_source_ids || []}
+              onSourcesChange={handleSourcesChange}
             />
           </Grid>
 
