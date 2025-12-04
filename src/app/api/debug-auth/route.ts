@@ -4,93 +4,92 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/db/client';
+import { db, checkDatabaseConnection } from '@/db/client';
 import { users } from '@/db/schema';
-import { eq } from 'drizzle-orm';
+import { eq, sql } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 
 export async function POST(request: NextRequest) {
+  const results: Record<string, unknown> = {};
+
   try {
-    const { email, password } = await request.json();
+    const body = await request.json();
+    const { email, password } = body;
+    results.email = email;
 
-    // Step 1: Check DB connection
-    const step1 = { status: 'checking database connection...' };
-
-    // Step 2: Query user
-    let user;
-    let queryError;
+    // Step 1: Test basic DB connection
     try {
-      const result = await db
+      const connected = await checkDatabaseConnection();
+      results.step1_db_connect = connected ? 'OK' : 'FAILED';
+    } catch (err) {
+      results.step1_db_connect_error = err instanceof Error ? err.message : String(err);
+    }
+
+    // Step 2: Test raw SQL query
+    try {
+      const rawResult = await db.execute(sql`SELECT COUNT(*) as count FROM users`);
+      results.step2_raw_count = rawResult;
+    } catch (err) {
+      results.step2_raw_error = err instanceof Error ? err.message : String(err);
+    }
+
+    // Step 3: Test Drizzle select (minimal columns)
+    try {
+      const minResult = await db
         .select({
           id: users.id,
           email: users.email,
-          password_hash: users.password_hash,
         })
         .from(users)
-        .where(eq(users.email, email))
         .limit(1);
-      user = result[0];
+      results.step3_drizzle_min = minResult.length > 0 ? 'OK' : 'NO_USERS';
     } catch (err) {
-      queryError = err instanceof Error ? err.message : String(err);
+      results.step3_drizzle_min_error = err instanceof Error ? err.message : String(err);
     }
 
-    if (queryError) {
-      return NextResponse.json({
-        step: 'query_user',
-        error: queryError,
-        email,
-      });
-    }
-
-    if (!user) {
-      return NextResponse.json({
-        step: 'user_not_found',
-        email,
-        userFound: false,
-      });
-    }
-
-    // Step 3: Check password hash exists
-    if (!user.password_hash) {
-      return NextResponse.json({
-        step: 'no_password_hash',
-        email,
-        userFound: true,
-        hasPasswordHash: false,
-      });
-    }
-
-    // Step 4: Compare password
-    let isValid;
-    let compareError;
+    // Step 4: Test Drizzle select with all columns
     try {
-      isValid = await bcrypt.compare(password, user.password_hash);
+      const fullResult = await db
+        .select()
+        .from(users)
+        .where(eq(users.email, email || 'test@example.com'))
+        .limit(1);
+      results.step4_drizzle_full = fullResult.length > 0 ? 'FOUND' : 'NOT_FOUND';
+      if (fullResult.length > 0) {
+        results.step4_user_id = fullResult[0].id;
+        results.step4_has_hash = !!fullResult[0].password_hash;
+      }
     } catch (err) {
-      compareError = err instanceof Error ? err.message : String(err);
+      results.step4_drizzle_full_error = err instanceof Error ? err.message : String(err);
     }
 
-    if (compareError) {
-      return NextResponse.json({
-        step: 'bcrypt_compare',
-        error: compareError,
-        email,
-        hashPrefix: user.password_hash.substring(0, 10),
-      });
+    // Step 5: If we got user, test password
+    if (results.step4_drizzle_full === 'FOUND' && password) {
+      try {
+        const [user] = await db
+          .select()
+          .from(users)
+          .where(eq(users.email, email))
+          .limit(1);
+
+        if (user && user.password_hash) {
+          const isValid = await bcrypt.compare(password, user.password_hash);
+          results.step5_password_valid = isValid;
+        }
+      } catch (err) {
+        results.step5_bcrypt_error = err instanceof Error ? err.message : String(err);
+      }
     }
 
     return NextResponse.json({
-      step: 'complete',
-      email,
-      userFound: true,
-      hasPasswordHash: true,
-      hashPrefix: user.password_hash.substring(0, 10),
-      passwordValid: isValid,
-      bcryptVersion: 'bcryptjs',
+      success: true,
+      results,
     });
   } catch (err) {
     return NextResponse.json({
-      step: 'request_parse',
+      success: false,
       error: err instanceof Error ? err.message : String(err),
+      results,
     });
   }
 }
