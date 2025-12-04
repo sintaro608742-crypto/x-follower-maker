@@ -10,13 +10,11 @@ import {
   Snackbar,
   Card,
   CardContent,
-  IconButton,
   Chip,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Tooltip,
 } from '@mui/material';
 import { MainLayout } from '@/layouts/MainLayout';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -28,7 +26,6 @@ import {
   MessageCircle,
   Quote,
   Sparkles,
-  ExternalLink,
   Calendar,
   Globe,
   Upload,

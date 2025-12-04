@@ -157,7 +157,7 @@ export const DashboardPage = () => {
 
     try {
       logger.debug('Updating auto post sources', { sourceIds, component: 'DashboardPage' });
-      const response = await updatePostSchedule(data.user.post_frequency, postTimes, sourceIds);
+      await updatePostSchedule(data.user.post_frequency, postTimes, sourceIds);
       showSnackbar('自動投稿ソースを更新しました', 'success');
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));

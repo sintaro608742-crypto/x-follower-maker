@@ -7,6 +7,7 @@ export interface User {
   keywords: string[];
   post_frequency: number;
   post_times: string[];
+  auto_post_source_ids: string[];
   created_at: string;
   updated_at: string;
 }

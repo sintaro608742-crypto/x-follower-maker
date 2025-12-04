@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Box, Card, Chip, Slider, Typography, TextField, IconButton, Tooltip, Checkbox, FormControlLabel } from '@mui/material';
+import { Box, Card, Chip, Slider, Typography, TextField, IconButton, Tooltip, Checkbox } from '@mui/material';
 import { motion } from 'framer-motion';
 import { Calendar, Plus, X, FileText, Link } from 'lucide-react';
 import type { Source } from '../../types';

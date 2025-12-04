@@ -1,5 +1,4 @@
 import type {
-  Source,
   SourceListResponse,
   SourceCreateFromUrlRequest,
   SourceCreateResponse,
