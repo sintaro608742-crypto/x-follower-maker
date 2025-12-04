@@ -47,10 +47,14 @@ export async function POST(request: NextRequest) {
       results.step3_drizzle_min_error = err instanceof Error ? err.message : String(err);
     }
 
-    // Step 4: Test Drizzle select with all columns
+    // Step 4: Test Drizzle select with specific columns (not all)
     try {
       const fullResult = await db
-        .select()
+        .select({
+          id: users.id,
+          email: users.email,
+          password_hash: users.password_hash,
+        })
         .from(users)
         .where(eq(users.email, email || 'test@example.com'))
         .limit(1);
@@ -67,7 +71,10 @@ export async function POST(request: NextRequest) {
     if (results.step4_drizzle_full === 'FOUND' && password) {
       try {
         const [user] = await db
-          .select()
+          .select({
+            id: users.id,
+            password_hash: users.password_hash,
+          })
           .from(users)
           .where(eq(users.email, email))
           .limit(1);

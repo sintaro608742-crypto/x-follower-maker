@@ -37,9 +37,12 @@ export async function POST(request: NextRequest) {
       throw new ValidationError('Password must be at least 8 characters long');
     }
 
-    // 既存ユーザーチェック
+    // 既存ユーザーチェック（必要なカラムのみ）
     const [existingUser] = await db
-      .select()
+      .select({
+        id: users.id,
+        email: users.email,
+      })
       .from(users)
       .where(eq(users.email, body.email))
       .limit(1);

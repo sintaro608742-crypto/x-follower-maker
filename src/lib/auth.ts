@@ -39,9 +39,18 @@ export const authOptions: NextAuthOptions = {
 
         try {
           console.log('[NextAuth] Looking up user in database...');
-          // データベースからユーザーを検索
+          // データベースからユーザーを検索（必要なカラムのみ）
           const [user] = await db
-            .select()
+            .select({
+              id: users.id,
+              email: users.email,
+              password_hash: users.password_hash,
+              twitter_user_id: users.twitter_user_id,
+              twitter_username: users.twitter_username,
+              keywords: users.keywords,
+              post_frequency: users.post_frequency,
+              post_times: users.post_times,
+            })
             .from(users)
             .where(eq(users.email, credentials.email))
             .limit(1);

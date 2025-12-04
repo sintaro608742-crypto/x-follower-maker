@@ -16,9 +16,13 @@ export async function POST(request: NextRequest) {
 
     console.log('[TEST-AUTH] Testing authentication for:', email);
 
-    // 1. ユーザーを検索
+    // 1. ユーザーを検索（必要なカラムのみ）
     const [user] = await db
-      .select()
+      .select({
+        id: users.id,
+        email: users.email,
+        password_hash: users.password_hash,
+      })
       .from(users)
       .where(eq(users.email, email))
       .limit(1);

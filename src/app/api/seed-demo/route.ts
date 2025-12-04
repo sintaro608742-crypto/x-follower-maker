@@ -26,9 +26,12 @@ export async function POST(request: NextRequest) {
     const createdUsers = [];
 
     for (const demoUser of DEMO_USERS) {
-      // 既存ユーザーをチェック
+      // 既存ユーザーをチェック（必要なカラムのみ）
       const [existingUser] = await db
-        .select()
+        .select({
+          id: users.id,
+          email: users.email,
+        })
         .from(users)
         .where(eq(users.email, demoUser.email))
         .limit(1);
