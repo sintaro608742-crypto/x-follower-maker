@@ -88,6 +88,32 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Step 6: Test selecting auto_post_source_ids column (dashboard query)
+    try {
+      const dashboardResult = await db
+        .select({
+          id: users.id,
+          email: users.email,
+          twitter_user_id: users.twitter_user_id,
+          twitter_username: users.twitter_username,
+          keywords: users.keywords,
+          post_frequency: users.post_frequency,
+          post_times: users.post_times,
+          auto_post_source_ids: users.auto_post_source_ids,
+          created_at: users.created_at,
+          updated_at: users.updated_at,
+        })
+        .from(users)
+        .where(eq(users.email, email || 'test@example.com'))
+        .limit(1);
+      results.step6_dashboard_query = dashboardResult.length > 0 ? 'OK' : 'NO_DATA';
+      if (dashboardResult.length > 0) {
+        results.step6_auto_post_source_ids = dashboardResult[0].auto_post_source_ids;
+      }
+    } catch (err) {
+      results.step6_dashboard_query_error = err instanceof Error ? err.message : String(err);
+    }
+
     return NextResponse.json({
       success: true,
       results,
