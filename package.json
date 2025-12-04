@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "next dev -p 8432",
     "build": "next build",
-    "build:frontend": "cd frontend && npm ci && npm run build && cd ..",
+    "build:frontend": "cd frontend && npm ci --include=dev && npm run build && cd ..",
     "build:full": "npm run build:frontend && npm run build",
     "start": "next start -p 8432",
     "test:e2e": "playwright test",
